@@ -1,38 +1,75 @@
-# CLAUDE.md — プロジェクトルール
+# CLAUDE.md — 世帯数ビューア全国版
 
 ## プロジェクト概要
-世帯ビューアー
+ポスティング配布員向け、町丁目別の建て方別世帯数を閲覧するPWA。全国47都道府県対応。GitHub Pagesでホスティング。
 
 ## フォルダ構成
-- CLAUDE.md … このファイル（ルール・全体像）
-- CHANGELOG.md … バージョンごとの変更履歴
-- SESSION_LOG.md … セッション作業記録（AI仕様忘れ防止）
-- index.html … 本体
-- backup/ … 大きな変更前のバックアップ
+- CLAUDE.md … このファイル
+- index.html … アプリ本体（HTML+CSS+JS単一ファイル）
+- sw.js … Service Worker
+- manifest.json … PWA設定
+- data/index.json … 都道府県一覧（起動時読み込み）
+- data/01.json〜47.json … 府県別町丁目データ（タップ時に遅延読み込み）
+- tools/build-data.js … データ生成スクリプト（開発時のみ使用）
 
 ## 絶対守るルール
-1. 作業開始前に SESSION_LOG.md の最新セッションを読み、前回の状態を把握する
-2. メインファイルを変更する前に現行コードを確認する
-3. ★変更禁止の箇所があれば記入★
-4. 大きな機能追加前に backup/ へ現行ファイルをコピーする（命名: ファイル名_v番号_日付）
-5. 変更後はブラウザF5リロードで動作確認する
-6. 完了後 CHANGELOG.md に変更内容を追記する
-7. セッション終了時に SESSION_LOG.md へ作業記録を追記する
+1. 作業指示に「実行しないで」とあれば絶対に実行しない
+2. index.htmlは単一ファイル構成（HTML+CSS+JS全部入り）を維持
+3. フレームワーク不使用、vanilla JS、var宣言スタイル
+4. 外部ライブラリ不使用（Leaflet, topojson-client等は使わない）
 
-## ロールバック手順
-### 方法1：backupフォルダから復元（簡単・確実）
-1. backup/ から復元したいバージョンをコピー
-2. メインファイルに上書き
-3. git add -A && git commit -m "v○○から復元"
-4. CHANGELOG.md に「失敗・破棄・復元」を記録
-5. SESSION_LOG.md に「失敗して戻した」ことを記録
+## ビルドスクリプト仕様 (tools/build-data.js)
 
-### 方法2：Gitで復元
-- 直前の変更を取り消す: git revert HEAD
-- 特定コミットまで戻す: git reset --hard <コミットID>
+Node.js 18+, 依存: topojson-client (npm install topojson-client)
 
-## 現在の数値
-★プロジェクト固有の数値を記入★
+### 入力
+TopoJSON: https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/XX-name-all.topojson
+e-Stat API appId: 61e89c03ae461dcfb60c7cfe0f235d92fcf4a111
 
-## 技術スタック
-★使用技術を記入★
+### TopoJSONファイル名
+01-hokkaido, 02-aomori, 03-iwate, 04-miyagi, 05-akita, 06-yamagata, 07-fukushima, 08-ibaraki, 09-tochigi, 10-gunma, 11-saitama, 12-chiba, 13-tokyo, 14-kanagawa, 15-niigata, 16-toyama, 17-ishikawa, 18-fukui, 19-yamanashi, 20-nagano, 21-gifu, 22-shizuoka, 23-aichi, 24-mie, 25-shiga, 26-kyoto, 27-oosaka, 28-hyogo, 29-nara, 30-wakayama, 31-tottori, 32-shimane, 33-okayama, 34-hiroshima, 35-yamaguchi, 36-tokushima, 37-kagawa, 38-ehime, 39-kouchi, 40-fukuoka, 41-saga, 42-nagasaki, 43-kumamoto, 44-ooita, 45-miyazaki, 46-kagoshima, 47-okinawa
+
+### e-Statデータ取得
+- getStatsList APIでstatsCode=00200521の小地域集計から各都道府県のstatsDataIdを動的取得
+- 人口世帯テーブル: cat01=0010(人口), cat01=0040(世帯数), cat02=1
+- 住宅建て方テーブル: cat01=0020(一戸建), cat01=0040(共同住宅)
+- KEY_CODEマッチング: 11桁→10桁→9桁フォールバック
+- setai=0かつjinko>0 → setai=Math.round(jinko/2.1)
+- API呼び出し間200ms sleep
+
+### 出力
+data/index.json: {"prefectures":[{"code":"01","name":"北海道","areas":数},...],"generated":"日付"}
+data/XX.json: [{"c":"コード","ct":"市","w":"区","m":"町丁目","s":世帯,"k":戸建,"ky":共同,"la":緯度,"lo":経度},...]
+座標は小数5桁丸め。進捗はconsole.logで都道府県ごと表示。
+
+## アプリ仕様 (index.html)
+
+### 動作フロー
+1. 起動 → data/index.json(15KB)読み込み → 47都道府県カード即表示
+2. 都道府県タップ → data/XX.json を1本fetch → SWキャッシュ → 市区町村リスト
+3. 市区町村タップ → 政令市なら区リスト、それ以外は町丁目リスト
+4. 町丁目タップ → Googleマップ直リンク (https://www.google.com/maps/search/住所)
+
+### データ管理
+var areasByPref = {}; var loadedPrefs = {};
+
+### 町丁目リスト
+1行表示: 町名(flex:1) | 総世帯 | 戸建 | 集合 | 集合%
+ヘッダー行あり
+
+### 集合比率の色（ポスティング視点：集合多い＝効率良い＝緑）
+- 80%以上 → 緑 var(--green)
+- 50〜79% → 橙 var(--orange)
+- 50%未満 → 赤 var(--red)
+- setai=0 → グレー var(--text3)「-」表示
+
+### 検索
+読み込み済み府県内のみ。サジェスト最大30件。pendingScrollTo+ハイライト。
+
+### UI
+ダークネイビー(#0f172a)配色。都道府県カードはコンパクトグリッド、絵文字不要。スワイプ戻る/進む対応。safe-area対応。
+
+### sw.js
+CACHE_NAME: setai-viewer-v3
+PRECACHE: index.html, manifest.json, data/index.json
+data/XX.json: network-first-fallback-cache

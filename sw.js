@@ -1,17 +1,12 @@
-var CACHE_NAME = 'setai-viewer-v2';
+var CACHE_NAME = 'setai-viewer-v3';
+
 var PRECACHE = [
-  './',
   './index.html',
   './manifest.json',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/topojson-client@3',
-  'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/26-kyoto-all.topojson',
-  'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/27-oosaka-all.topojson',
-  'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/28-hyogo-all.topojson',
-  'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/29-nara-all.topojson'
+  './data/index.json'
 ];
 
+// ---- Install: 静的リソースをプリキャッシュ ----
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
@@ -21,43 +16,52 @@ self.addEventListener('install', function(e) {
   self.skipWaiting();
 });
 
+// ---- Activate: 旧キャッシュを削除 ----
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(names) {
       return Promise.all(
-        names.filter(function(n) { return n !== CACHE_NAME; })
-            .map(function(n) { return caches.delete(n); })
+        names
+          .filter(function(n) { return n !== CACHE_NAME; })
+          .map(function(n) { return caches.delete(n); })
       );
     })
   );
   self.clients.claim();
 });
 
+// ---- Fetch ----
 self.addEventListener('fetch', function(e) {
-  // Network-first for API calls, cache-first for static assets
   var url = e.request.url;
 
-  if (url.includes('e-stat.go.jp') || url.includes('raw.githubusercontent.com')) {
-    // Network first, fallback to cache
+  // data/XX.json: キャッシュ優先（初回はネットワーク取得してキャッシュ）
+  if (url.indexOf('/data/') !== -1 && url.indexOf('.json') !== -1) {
     e.respondWith(
-      fetch(e.request).then(function(res) {
-        var clone = res.clone();
-        caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, clone); });
-        return res;
-      }).catch(function() {
-        return caches.match(e.request);
-      })
-    );
-  } else {
-    // Cache first, fallback to network
-    e.respondWith(
-      caches.match(e.request).then(function(res) {
-        return res || fetch(e.request).then(function(netRes) {
-          var clone = netRes.clone();
-          caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, clone); });
-          return netRes;
+      caches.match(e.request).then(function(cached) {
+        if (cached) return cached;
+        return fetch(e.request).then(function(res) {
+          var clone = res.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(e.request, clone);
+          });
+          return res;
         });
       })
     );
+    return;
   }
+
+  // 静的アセット: キャッシュ優先、なければネットワーク
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
+      if (cached) return cached;
+      return fetch(e.request).then(function(res) {
+        var clone = res.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(e.request, clone);
+        });
+        return res;
+      });
+    })
+  );
 });
