@@ -1,0 +1,52 @@
+世帯数ビューア PWA — 引き継ぎ要約
+プロジェクト概要
+ポスティング配布員がスマホで使う、町丁目別の建て方別世帯数を閲覧するPWAアプリ。大阪府・兵庫県・京都府・奈良県の4府県対応。オフライン動作。GitHub Pagesでホスティング。
+
+現在の状態
+v0.2（試作2版）が動作中。GitHub Pagesにデプロイ済み。リポジトリは setai-viewer。
+
+ファイル構成は以下の4ファイル＋アイコン2枚。
+
+index.html — アプリ本体（HTML+CSS+JS全部入り、単一ファイル）
+manifest.json — PWA設定（アプリ名、アイコン、スタンドアロン表示）
+sw.js — Service Worker（静的アセットはcache-first、API/TopoJSONはnetwork-first-fallback-cache）
+icon-192.png / icon-512.png — 仮アイコン（後でADMAXロゴに差し替え予定）
+技術スタック
+HTML + CSS + vanilla JavaScript（フレームワークなし）。Leaflet（地図表示）。TopoJSON Client（境界データパース）。e-Stat API（世帯数・住宅データ）。GitHub Pages（ホスティング、HTTPS自動対応）。Service Worker（オフラインキャッシュ）。
+
+データフロー
+初回起動時にTopoJSON（GitHub nyampire/jp_chome_boundary、4府県分）とe-Stat API（人口・世帯・住宅データ）をfetchし、パース・結合後にlocalStorageにキャッシュ（キーは setai_viewer_v2）。2回目以降はキャッシュから即表示し、バックグラウンドでサイレント更新。Service Workerがfetchレスポンスもキャッシュするため、完全オフラインで動作。
+
+e-Stat statsDataId一覧：人口（JINKO/SETAI）は ESTAT_POP_IDS、住宅（KODATE/KYODO）は ESTAT_HOUSE_IDS。appIdは 61e89c03ae461dcfb60c7cfe0f235d92fcf4a111（公開データ用、秘匿不要）。
+
+画面構成
+画面1（トップ）→ 4府県のカード選択。画面2 → 市区町村リスト。政令市はタップで区一覧へ展開、区なし市は直接町丁目リストへ。画面3 → 区リスト（政令市のみ）。画面4 → 町丁目リスト（メイン画面）。
+
+町丁目リストの各行は1行コンパクト表示で、町丁目名・総世帯数・戸建数・共同住宅数・集合比率（%）を横一列に表示。タップで画面下半分に地図パネルがスライドアップし、Leaflet地図にその町丁目の境界ポリゴンを青枠で表示。「Googleマップで開く」ボタンでURLスキーム（/maps/search/住所）で外部遷移。
+
+検索は画面上部に常時表示の検索バー。入力でサジェストがリアルタイム表示（最大30件）。サジェスト選択で該当町丁目リストへ遷移し、該当行まで自動スクロール＋ハイライトアニメーション（pendingScrollTo変数で制御）。
+
+ナビゲーション
+navStack（戻る履歴）と forwardStack（進む履歴）で管理。ヘッダー左の「‹」ボタンで戻る。画面スワイプ対応済み（右スワイプで戻る、左スワイプで進む）。スワイプ判定は touchstart/touchend のdx>60px かつ dy/dx<0.6。遷移時にCSSアニメーション（swipe-right/swipe-left）を付与。
+
+デザイン方針
+ダークネイビー（#0f172a）基調、カード型UI、大きめタップ領域。CSS変数で色管理（--bg, --surface, --accent等）。モダン・スタイリッシュ・直感操作。safe-area-inset対応済み。
+
+要件者からのフィードバック（v0.2時点）
+①1丁1行表示がベスト → v0.2で対応済み。3カード横並びを廃止し、1行に町名+数値+集合比率を収めた。
+
+②検索で結果へ飛んでも画面がスクロールされない → v0.2で対応済み。pendingScrollToで該当行に自動スクロール＋ハイライト。
+
+③スワイプで戻る/進むを使いたい → v0.2で対応済み。touchイベントでスワイプ検出、navStack/forwardStackで履歴管理。
+
+未実装・今後の検討事項
+アイコンをADMAXロゴに差し替え
+localStorageのGeoJSONデータが大きい場合のサイズ最適化（現在はキャッシュ時にgeoJsonを除外して座標のみ保存、地図表示時はService Workerキャッシュから再取得）
+データ更新頻度は国勢調査更新時（5年に1回）のみで十分
+配布率をかけた配布部数の表示は現時点では不要
+地図パネルのUIブラッシュアップ（境界線の色・太さ調整等）
+親プロジェクトとの関係
+このPWAは「ポスティングエリア選択ツール v1.5.11」（map-.html、約6,000行の単一HTMLファイル）とは独立したアプリ。同じe-Stat APIとTopoJSONデータソースを使用するが、コードベースは完全に別。親ツールのGoogle Geocoding APIキーはこのPWAには含まれていない（Publicリポジトリで安全）。
+
+GitHubファイル更新手順
+リポジトリページで対象ファイルをクリック → 鉛筆アイコン右の「▼」→「Edit in place」→ Ctrl+Aで全選択→Delete→新コード貼り付け → 「Commit changes...」→「Commit changes」。1〜2分でGitHub Pagesに反映。

@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  <title>世帯数ビューア</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #3b82f6;
+      --accent2: #60a5fa;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --green: #22c55e;
+      --orange: #f97316;
+      --red: #ef4444;
+      --radius: 12px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* ===== App Shell ===== */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* ===== Header ===== */
+    .header {
+      background: var(--surface);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--surface2);
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .header .back-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--accent2);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    .header .back-btn.visible { display: block; }
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .header .subtitle {
+      font-size: 11px;
+      color: var(--text3);
+      white-space: nowrap;
+    }
+
+    /* ===== Search ===== */
+    .search-wrap {
+      padding: 8px 16px;
+      background: var(--bg);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 90;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 0 12px;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus-within { border-color: var(--accent); }
+    .search-box .icon { color: var(--text3); font-size: 16px; flex-shrink: 0; }
+    .search-box input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 15px;
+      padding: 10px 8px;
+      font-family: inherit;
+    }
+    .search-box input::placeholder { color: var(--text3); }
+    .search-box .clear-btn {
+      display: none;
+      background: var(--surface2);
+      border: none;
+      color: var(--text2);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      line-height: 20px;
+      text-align: center;
+    }
+    .search-box .clear-btn.visible { display: block; }
+
+    /* Suggest dropdown */
+    .suggest-list {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 16px;
+      right: 16px;
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 0 0 var(--radius) var(--radius);
+      max-height: 60vh;
+      overflow-y: auto;
+      z-index: 200;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .suggest-list.visible { display: block; }
+    .suggest-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: background 0.1s;
+    }
+    .suggest-item:active { background: var(--surface2); }
+    .suggest-item .s-name { font-size: 14px; font-weight: 500; }
+    .suggest-item .s-path { font-size: 11px; color: var(--text3); }
+
+    /* ===== Content ===== */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* ===== Prefecture Cards ===== */
+    .pref-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px;
+    }
+    .pref-card {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .pref-card:active { transform: scale(0.97); border-color: var(--accent); }
+    .pref-card .pref-emoji { font-size: 32px; margin-bottom: 8px; }
+    .pref-card .pref-name { font-size: 16px; font-weight: 700; }
+    .pref-card .pref-count { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ===== List Items ===== */
+    .list-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: background 0.1s;
+      gap: 12px;
+    }
+    .list-item:active { background: var(--surface); }
+    .list-item .li-main { flex: 1; min-width: 0; }
+    .list-item .li-name {
+      font-size: 15px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .list-item .li-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .list-item .li-arrow { color: var(--text3); font-size: 14px; flex-shrink: 0; }
+    .list-item .li-count {
+      font-size: 12px;
+      color: var(--text2);
+      background: var(--surface2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ===== Town Detail (Area row) ===== */
+    .town-list-header {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      font-size: 10px;
+      color: var(--text3);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .town-list-header .th-name { flex: 1; min-width: 0; }
+    .town-list-header .th-stat { width: 52px; text-align: right; flex-shrink: 0; }
+    .town-list-header .th-pct { width: 46px; text-align: right; flex-shrink: 0; }
+    .town-row {
+      display: flex;
+      align-items: center;
+      height: 44px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: background 0.1s;
+      gap: 4px;
+    }
+    .town-row:active { background: var(--surface); }
+    .town-row .town-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .town-row .town-val {
+      width: 52px;
+      text-align: right;
+      font-size: 12px;
+      color: var(--text2);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .town-row .town-pct {
+      width: 46px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .town-pct.pct-green { color: var(--green); }
+    .town-pct.pct-orange { color: var(--orange); }
+    .town-pct.pct-red { color: var(--red); }
+    .town-pct.pct-none { color: var(--text3); }
+    @keyframes highlight {
+      0% { background-color: rgba(59,130,246,0.35); }
+      100% { background-color: transparent; }
+    }
+    .town-row.highlighted { animation: highlight 1.5s ease-out forwards; }
+
+    /* ===== Progress Bar ===== */
+    .progress-bar-wrap {
+      width: 200px;
+      height: 4px;
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* ===== Map Panel ===== */
+    .map-panel {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 55vh;
+      background: var(--surface);
+      border-radius: 16px 16px 0 0;
+      z-index: 300;
+      flex-direction: column;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+      transition: transform 0.3s ease;
+    }
+    .map-panel.visible { display: flex; }
+    .map-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--surface2);
+      flex-shrink: 0;
+    }
+    .map-panel-header .mp-title { font-size: 14px; font-weight: 700; }
+    .map-panel-header .mp-close {
+      background: var(--surface2);
+      border: none;
+      color: var(--text2);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #miniMap { flex: 1; }
+    .map-panel-footer {
+      padding: 10px 16px;
+      padding-bottom: calc(10px + var(--safe-bottom));
+      flex-shrink: 0;
+      display: flex;
+      gap: 8px;
+    }
+    .gmap-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .gmap-btn:active { background: #2563eb; }
+
+    /* ===== Loading ===== */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--text3);
+      gap: 12px;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--surface2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Empty State ===== */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text3);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.5; }
+
+    /* ===== Scrollbar ===== */
+    .content::-webkit-scrollbar { width: 4px; }
+    .content::-webkit-scrollbar-track { background: transparent; }
+    .content::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+
+    /* ===== Overlay dim ===== */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 250;
+    }
+    .overlay.visible { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <button class="back-btn" id="backBtn" onclick="goBack()">‹</button>
+      <h1 id="headerTitle">世帯数ビューア</h1>
+      <span class="subtitle" id="headerSub">4府県対応</span>
+    </div>
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="町名を検索..." autocomplete="off">
+        <button class="clear-btn" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="suggest-list" id="suggestList"></div>
+    </div>
+    <div class="content" id="content">
+      <div class="loading" id="loadingView">
+        <div class="spinner"></div>
+        <div>データを読み込み中...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeMap()"></div>
+  <div class="map-panel" id="mapPanel">
+    <div class="map-panel-header">
+      <span class="mp-title" id="mapTitle">—</span>
+      <button class="mp-close" onclick="closeMap()">✕</button>
+    </div>
+    <div id="miniMap"></div>
+    <div class="map-panel-footer">
+      <button class="gmap-btn" id="gmapBtn" onclick="openGoogleMap()">
+        <span>📍</span> Googleマップで開く
+      </button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script>
+    /* ============================================================
+       ポスティング世帯数ビューア PWA — Main Script
+    ============================================================ */
+
+    // ---- Config ----
+    var TOPOJSON_URLS = [
+      'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/26-kyoto-all.topojson',
+      'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/27-oosaka-all.topojson',
+      'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/28-hyogo-all.topojson',
+      'https://raw.githubusercontent.com/nyampire/jp_chome_boundary/master/TopoJSON/29-nara-all.topojson'
+    ];
+    var PREF_MAP = {'26':'京都府','27':'大阪府','28':'兵庫県','29':'奈良県'};
+    var PREF_EMOJI = {'26':'⛩️','27':'🏯','28':'🌉','29':'🦌'};
+    var PREF_CODES = ['26','27','28','29'];
+
+    var ESTAT_APP_ID = '61e89c03ae461dcfb60c7cfe0f235d92fcf4a111';
+    var ESTAT_API_BASE = 'https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData';
+    var ESTAT_POP_IDS   = {'26':'8003006701','27':'8003006702','28':'8003006742','29':'8003006713'};
+    var ESTAT_HOUSE_IDS = {'26':'8003006958','27':'8003006949','28':'8003006967','29':'8003006939'};
+
+    var CACHE_KEY = 'setai_viewer_v1';
+
+    // ---- State ----
+    var allAreas = [];       // [{code, pref, prefCode, city, ward, moji, setai, kodate, kyodo, lat, lng, geoJson}]
+    var navStack = [];       // [{view, params}]
+    var currentView = null;
+    var miniMap = null;
+    var miniLayer = null;
+    var currentArea = null;
+    var pendingScrollTo = null;
+
+    // ---- Data Loading ----
+    async function loadData() {
+      // Try cache first
+      var cached = null;
+      try {
+        cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+        if (cached && cached.areas && cached.areas.length > 0) {
+          allAreas = cached.areas;
+          console.log('[Cache] Loaded ' + allAreas.length + ' areas from localStorage');
+          showPrefView();
+          // Background refresh silently
+          fetchFreshData(true);
+          return;
+        }
+      } catch(e) {}
+
+      await fetchFreshData(false);
+    }
+
+    async function fetchFreshData(silent) {
+      if (!silent) showLoading('TopoJSON読み込み中... (0/4)', 0, 12);
+
+      try {
+        // 1. Load TopoJSON boundaries
+        var topoCompleted = 0;
+        var topoResults = await Promise.all(TOPOJSON_URLS.map(function(url) {
+          return fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+            topoCompleted++;
+            if (!silent) updateLoadingProgress('TopoJSON読み込み中... (' + topoCompleted + '/4)', topoCompleted, 12);
+            return data;
+          });
+        }));
+
+        var features = [];
+        topoResults.forEach(function(topo) {
+          var key = Object.keys(topo.objects)[0];
+          var geo = topojson.feature(topo, topo.objects[key]);
+          geo.features.forEach(function(f) {
+            var code = String(f.properties.KEY_CODE || '');
+            if (PREF_CODES.some(function(p) { return code.startsWith(p); })) {
+              features.push(f);
+            }
+          });
+        });
+
+        console.log('[TopoJSON] ' + features.length + ' features loaded');
+
+        // 2. Build area list
+        var areaMap = new Map();
+        features.forEach(function(f) {
+          var p = f.properties;
+          var code = String(p.KEY_CODE || '');
+          var prefCode = code.substring(0,2);
+          var centroid = turf_centroid(f);
+
+          var area = {
+            code: code,
+            prefCode: prefCode,
+            pref: PREF_MAP[prefCode] || '',
+            city: p.GST_NAME || '',
+            ward: p.CSS_NAME || '',
+            moji: p.MOJI || '',
+            setai: 0,
+            kodate: 0,
+            kyodo: 0,
+            jinko: 0,
+            lat: centroid[1],
+            lng: centroid[0],
+            geoJson: f
+          };
+          areaMap.set(code, area);
+        });
+
+        // 3. Fetch e-Stat data
+        if (!silent) updateLoadingProgress('e-Statデータ取得中... (0/8)', 4, 12);
+        var estatCompleted = 0;
+        var estatPromises = [];
+        PREF_CODES.forEach(function(pref) {
+          estatPromises.push(fetchEstat(ESTAT_POP_IDS[pref], '0010,0040', '1').then(function(vals) {
+            estatCompleted++;
+            if (!silent) updateLoadingProgress('e-Statデータ取得中... (' + estatCompleted + '/8)', 4 + estatCompleted, 12);
+            return {type:'pop', vals:vals};
+          }));
+          estatPromises.push(fetchEstat(ESTAT_HOUSE_IDS[pref], '0020,0040', null).then(function(vals) {
+            estatCompleted++;
+            if (!silent) updateLoadingProgress('e-Statデータ取得中... (' + estatCompleted + '/8)', 4 + estatCompleted, 12);
+            return {type:'house', vals:vals};
+          }));
+        });
+
+        var estatResults = await Promise.all(estatPromises);
+        estatResults.forEach(function(r) {
+          r.vals.forEach(function(v) {
+            var areaCode = v['@area'];
+            if (!areaCode) return;
+            var num = parseInt(v['$'], 10);
+            if (isNaN(num) || v['$'] === '-') num = 0;
+
+            // Try exact match, then prefix match
+            var area = areaMap.get(areaCode);
+            if (!area && areaCode.length === 11) {
+              area = areaMap.get(areaCode.substring(0,10)) || areaMap.get(areaCode.substring(0,9));
+            }
+            if (!area) return;
+
+            if (r.type === 'pop') {
+              if (v['@cat01'] === '0010') area.jinko = Math.max(area.jinko, num);
+              if (v['@cat01'] === '0040') area.setai = Math.max(area.setai, num);
+            } else {
+              if (v['@cat01'] === '0020') area.kodate = Math.max(area.kodate, num);
+              if (v['@cat01'] === '0040') area.kyodo = Math.max(area.kyodo, num);
+            }
+          });
+        });
+
+        allAreas = Array.from(areaMap.values());
+
+        // Fallback: setai from jinko
+        allAreas.forEach(function(a) {
+          if (a.setai === 0 && a.jinko > 0) a.setai = Math.round(a.jinko / 2.1);
+        });
+
+        // Cache
+        try {
+          var toCache = allAreas.map(function(a) {
+            return {code:a.code, prefCode:a.prefCode, pref:a.pref, city:a.city, ward:a.ward, moji:a.moji,
+                    setai:a.setai, kodate:a.kodate, kyodo:a.kyodo, lat:a.lat, lng:a.lng};
+          });
+          localStorage.setItem(CACHE_KEY, JSON.stringify({areas: toCache, ts: Date.now()}));
+        } catch(e) { console.warn('[Cache] Save failed:', e.message); }
+
+        console.log('[Data] Loaded ' + allAreas.length + ' areas');
+        if (!silent) showPrefView();
+
+      } catch(err) {
+        console.error('[Data] Error:', err);
+        if (!silent) {
+          document.getElementById('content').innerHTML =
+            '<div class="empty-state"><div class="empty-icon">⚠️</div>データの読み込みに失敗しました<br><br><button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;cursor:pointer;">再読み込み</button></div>';
+        }
+      }
+    }
+
+    async function fetchEstat(statsDataId, cdCat01, cdCat02) {
+      var allVals = [];
+      var limit = 100000;
+      async function go(startPos) {
+        var url = ESTAT_API_BASE + '?appId=' + ESTAT_APP_ID + '&lang=J&statsDataId=' + statsDataId
+                + '&cdCat01=' + cdCat01 + (cdCat02 ? '&cdCat02=' + cdCat02 : '')
+                + '&limit=' + limit + '&startPosition=' + startPos + '&metaGetFlg=N';
+        var res = await fetch(url);
+        var json = await res.json();
+        var sd = json.GET_STATS_DATA;
+        if (!sd || sd.RESULT.STATUS !== 0) return allVals;
+        var vals = (sd.STATISTICAL_DATA.DATA_INF && sd.STATISTICAL_DATA.DATA_INF.VALUE) || [];
+        allVals = allVals.concat(vals);
+        var nk = sd.STATISTICAL_DATA.RESULT_INF.NEXT_KEY;
+        if (nk) return go(nk);
+        return allVals;
+      }
+      return go(1);
+    }
+
+    // Simple centroid (no turf dependency)
+    function turf_centroid(feature) {
+      var coords = [];
+      function extract(c, type) {
+        if (type === 'Polygon') { c[0].forEach(function(p) { coords.push(p); }); }
+        else if (type === 'MultiPolygon') { c.forEach(function(poly) { poly[0].forEach(function(p) { coords.push(p); }); }); }
+      }
+      extract(feature.geometry.coordinates, feature.geometry.type);
+      if (coords.length === 0) return [135.5, 34.7];
+      var sumLng = 0, sumLat = 0;
+      coords.forEach(function(c) { sumLng += c[0]; sumLat += c[1]; });
+      return [sumLng / coords.length, sumLat / coords.length];
+    }
+
+    // ---- Navigation ----
+    function navigate(view, params) {
+      if (currentView) navStack.push({view: currentView, params: currentView._params});
+      showView(view, params);
+      updateBackBtn();
+    }
+
+    function goBack() {
+      if (navStack.length === 0) return;
+      var prev = navStack.pop();
+      showView(prev.view, prev.params);
+      updateBackBtn();
+    }
+
+    function updateBackBtn() {
+      var btn = document.getElementById('backBtn');
+      btn.classList.toggle('visible', navStack.length > 0);
+    }
+
+    function showView(view, params) {
+      currentView = view;
+      currentView._params = params;
+      view(params);
+    }
+
+    // ---- Views ----
+    function showLoading(msg, step, total) {
+      var pct = (step != null && total) ? Math.round(step / total * 100) : 0;
+      document.getElementById('content').innerHTML =
+        '<div class="loading"><div class="spinner"></div>'
+        + '<div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:' + pct + '%"></div></div>'
+        + '<div id="loadingMsg">' + (msg || 'データを読み込み中...') + '</div></div>';
+    }
+
+    function updateLoadingProgress(msg, step, total) {
+      var msgEl = document.getElementById('loadingMsg');
+      var barEl = document.getElementById('progressBar');
+      if (msgEl) msgEl.textContent = msg;
+      if (barEl && total) barEl.style.width = Math.round(step / total * 100) + '%';
+    }
+
+    function showPrefView() {
+      document.getElementById('headerTitle').textContent = '世帯数ビューア';
+      document.getElementById('headerSub').textContent = '4府県対応';
+      navStack = [];
+      currentView = showPrefView;
+      currentView._params = null;
+      updateBackBtn();
+
+      var counts = {};
+      PREF_CODES.forEach(function(c) { counts[c] = 0; });
+      allAreas.forEach(function(a) { if (counts[a.prefCode] !== undefined) counts[a.prefCode]++; });
+
+      var html = '<div class="pref-grid">';
+      PREF_CODES.forEach(function(c) {
+        html += '<div class="pref-card" onclick="navigate(showCityView,\'' + c + '\')">'
+          + '<div class="pref-emoji">' + (PREF_EMOJI[c]||'📍') + '</div>'
+          + '<div class="pref-name">' + PREF_MAP[c] + '</div>'
+          + '<div class="pref-count">' + fmtNum(counts[c]) + ' エリア</div>'
+          + '</div>';
+      });
+      html += '</div>';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function showCityView(prefCode) {
+      var prefName = PREF_MAP[prefCode];
+      document.getElementById('headerTitle').textContent = prefName;
+      document.getElementById('headerSub').textContent = '';
+
+      var cities = {};
+      allAreas.forEach(function(a) {
+        if (a.prefCode !== prefCode) return;
+        var key = a.city || '不明';
+        if (!cities[key]) cities[key] = {name: key, count: 0, hasWard: false};
+        cities[key].count++;
+        if (a.ward) cities[key].hasWard = true;
+      });
+
+      var sorted = Object.values(cities).sort(function(a,b) { return a.name.localeCompare(b.name, 'ja'); });
+
+      var html = '';
+      sorted.forEach(function(c) {
+        if (c.hasWard) {
+          html += '<div class="list-item" onclick="navigate(showWardView,{prefCode:\'' + prefCode + '\',city:\'' + esc(c.name) + '\'})">'
+            + '<div class="li-main"><div class="li-name">' + esc(c.name) + '</div></div>'
+            + '<span class="li-count">' + fmtNum(c.count) + '</span>'
+            + '<span class="li-arrow">›</span></div>';
+        } else {
+          html += '<div class="list-item" onclick="navigate(showTownView,{prefCode:\'' + prefCode + '\',city:\'' + esc(c.name) + '\',ward:\'\'})">'
+            + '<div class="li-main"><div class="li-name">' + esc(c.name) + '</div></div>'
+            + '<span class="li-count">' + fmtNum(c.count) + '</span>'
+            + '<span class="li-arrow">›</span></div>';
+        }
+      });
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function showWardView(params) {
+      document.getElementById('headerTitle').textContent = params.city;
+      document.getElementById('headerSub').textContent = '';
+
+      var wards = {};
+      allAreas.forEach(function(a) {
+        if (a.prefCode !== params.prefCode || a.city !== params.city) return;
+        var key = a.ward || '（区なし）';
+        if (!wards[key]) wards[key] = {name: key, count: 0};
+        wards[key].count++;
+      });
+
+      var sorted = Object.values(wards).sort(function(a,b) { return a.name.localeCompare(b.name, 'ja'); });
+
+      var html = '';
+      sorted.forEach(function(w) {
+        html += '<div class="list-item" onclick="navigate(showTownView,{prefCode:\'' + params.prefCode + '\',city:\'' + esc(params.city) + '\',ward:\'' + esc(w.name === '（区なし）' ? '' : w.name) + '\'})">'
+          + '<div class="li-main"><div class="li-name">' + esc(w.name) + '</div></div>'
+          + '<span class="li-count">' + fmtNum(w.count) + '</span>'
+          + '<span class="li-arrow">›</span></div>';
+      });
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function showTownView(params) {
+      var title = params.ward || params.city;
+      document.getElementById('headerTitle').textContent = title;
+      document.getElementById('headerSub').textContent = params.ward ? params.city : '';
+
+      var towns = allAreas.filter(function(a) {
+        return a.prefCode === params.prefCode && a.city === params.city && (a.ward || '') === (params.ward || '');
+      }).sort(function(a,b) { return a.moji.localeCompare(b.moji, 'ja'); });
+
+      if (towns.length === 0) {
+        document.getElementById('content').innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>データがありません</div>';
+        return;
+      }
+
+      var html = '<div class="town-list-header">'
+        + '<span class="th-name">町丁目</span>'
+        + '<span class="th-stat">総世帯</span>'
+        + '<span class="th-stat">戸建</span>'
+        + '<span class="th-stat">集合</span>'
+        + '<span class="th-pct">集合%</span>'
+        + '</div>';
+
+      towns.forEach(function(t) {
+        var areaIdx = allAreas.indexOf(t);
+        var pct = t.setai > 0 ? (t.kyodo / t.setai * 100) : -1;
+        var pctStr = pct < 0 ? '-' : pct.toFixed(0) + '%';
+        var pctClass = pct < 0 ? 'pct-none' : (pct < 50 ? 'pct-green' : (pct < 80 ? 'pct-orange' : 'pct-red'));
+        html += '<div class="town-row" data-area-idx="' + areaIdx + '" onclick="showMap(' + areaIdx + ')">'
+          + '<div class="town-name">' + esc(t.moji) + '</div>'
+          + '<div class="town-val">' + fmtNum(t.setai) + '</div>'
+          + '<div class="town-val">' + fmtNum(t.kodate) + '</div>'
+          + '<div class="town-val">' + fmtNum(t.kyodo) + '</div>'
+          + '<div class="town-pct ' + pctClass + '">' + pctStr + '</div>'
+          + '</div>';
+      });
+
+      document.getElementById('content').innerHTML = html;
+
+      if (pendingScrollTo !== null) {
+        var targetEl = document.querySelector('.town-row[data-area-idx="' + pendingScrollTo + '"]');
+        if (targetEl) {
+          setTimeout(function() {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.classList.add('highlighted');
+            setTimeout(function() { targetEl.classList.remove('highlighted'); }, 1500);
+          }, 100);
+        }
+        pendingScrollTo = null;
+      }
+    }
+
+    // ---- Map Panel ----
+    function showMap(areaIdx) {
+      var area = allAreas[areaIdx];
+      if (!area) return;
+      currentArea = area;
+
+      document.getElementById('mapTitle').textContent = area.moji;
+      document.getElementById('overlay').classList.add('visible');
+      document.getElementById('mapPanel').classList.add('visible');
+
+      setTimeout(function() {
+        if (!miniMap) {
+          miniMap = L.map('miniMap', { zoomControl: false, attributionControl: false });
+          L.tileLayer('https://tile.openstreetmap.jp/styles/osm-bright-ja/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(miniMap);
+        }
+        if (miniLayer) { miniMap.removeLayer(miniLayer); miniLayer = null; }
+
+        if (area.geoJson) {
+          miniLayer = L.geoJSON(area.geoJson, {
+            style: { color: '#3b82f6', weight: 3, opacity: 1, fillColor: '#3b82f6', fillOpacity: 0.15 }
+          }).addTo(miniMap);
+          miniMap.fitBounds(miniLayer.getBounds(), { padding: [20, 20] });
+        } else {
+          miniMap.setView([area.lat, area.lng], 16);
+        }
+        miniMap.invalidateSize();
+      }, 50);
+    }
+
+    function closeMap() {
+      document.getElementById('overlay').classList.remove('visible');
+      document.getElementById('mapPanel').classList.remove('visible');
+      currentArea = null;
+    }
+
+    function openGoogleMap() {
+      if (!currentArea) return;
+      var q = currentArea.pref + currentArea.city + (currentArea.ward || '') + currentArea.moji;
+      window.open('https://www.google.com/maps/search/' + encodeURIComponent(q), '_blank');
+    }
+
+    // ---- Search ----
+    var searchInput = document.getElementById('searchInput');
+    var suggestList = document.getElementById('suggestList');
+    var searchClear = document.getElementById('searchClear');
+    var searchDebounce = null;
+
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchDebounce);
+      var q = this.value.trim();
+      searchClear.classList.toggle('visible', q.length > 0);
+      if (q.length < 1) { suggestList.classList.remove('visible'); return; }
+      searchDebounce = setTimeout(function() { doSuggest(q); }, 100);
+    });
+
+    searchInput.addEventListener('focus', function() {
+      var q = this.value.trim();
+      if (q.length >= 1) doSuggest(q);
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-wrap')) suggestList.classList.remove('visible');
+    });
+
+    function clearSearch() {
+      searchInput.value = '';
+      searchClear.classList.remove('visible');
+      suggestList.classList.remove('visible');
+    }
+
+    function doSuggest(query) {
+      var q = query.toLowerCase();
+      var results = [];
+      for (var i = 0; i < allAreas.length && results.length < 30; i++) {
+        var a = allAreas[i];
+        var searchText = (a.city + a.ward + a.moji).toLowerCase();
+        if (searchText.includes(q)) results.push(a);
+      }
+
+      if (results.length === 0) {
+        suggestList.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text3);font-size:13px;">該当なし</div>';
+      } else {
+        var html = '';
+        results.forEach(function(a) {
+          var idx = allAreas.indexOf(a);
+          html += '<div class="suggest-item" onclick="selectSuggest(' + idx + ')">'
+            + '<div class="s-name">' + esc(a.moji) + '</div>'
+            + '<div class="s-path">' + esc(a.pref + ' ' + a.city + ' ' + (a.ward || '')) + ' — 世帯 ' + fmtNum(a.setai) + '</div>'
+            + '</div>';
+        });
+        suggestList.innerHTML = html;
+      }
+      suggestList.classList.add('visible');
+    }
+
+    function selectSuggest(idx) {
+      suggestList.classList.remove('visible');
+      searchInput.value = '';
+      searchClear.classList.remove('visible');
+      searchInput.blur();
+
+      var a = allAreas[idx];
+      pendingScrollTo = idx;
+      navigate(showTownView, {prefCode: a.prefCode, city: a.city, ward: a.ward || ''});
+    }
+
+    // ---- Utilities ----
+    function fmtNum(n) { return Number(n || 0).toLocaleString(); }
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    // ---- Init ----
+    loadData();
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+  </script>
+</body>
+</html>

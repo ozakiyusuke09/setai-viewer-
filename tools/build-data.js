@@ -141,6 +141,8 @@ async function fetchAllStatsList() {
       + '?appId=' + ESTAT_APP_ID
       + '&lang=J'
       + '&statsCode=00200521'
+      + '&surveyYears=2020'
+      + '&searchKind=2'
       + '&startPosition=' + startPos
       + '&limit=100';
 
@@ -172,28 +174,29 @@ async function fetchAllStatsList() {
 //  都道府県 × タイプ ('pop'|'house') の statsDataId を検索
 // ============================================================
 
-function findStatsId(tables, prefName, type) {
-  // COLLECT_AREA で都道府県を絞り込み、タイトルでテーブル種別を判定
+function findStatsId(tables, prefCode, prefName, type) {
   for (var i = 0; i < tables.length; i++) {
     var t = tables[i];
-    var area  = extractStr(t.COLLECT_AREA);
-    var title = extractStr(t.TITLE);
-    var tname = (t.TITLE_SPEC && extractStr(t.TITLE_SPEC.TABLE_NAME)) || '';
-    var full  = title + ' ' + tname;
-
-    // 都道府県マッチ（完全一致 or 部分一致）
-    if (area !== prefName && !area.includes(prefName)) continue;
-
+    if (t.SMALL_AREA !== 1) continue;
+    var sname = extractStr(t.STATISTICS_NAME);
+    if (!sname.includes('国勢調査')) continue;
+    var titleSpec = t.TITLE_SPEC || {};
+    var subCat1 = extractStr(titleSpec.TABLE_SUB_CATEGORY1);
+    var titleObj = t.TITLE || {};
+    var titleNo = titleObj['@no'] || '';
+    var titleStr = extractStr(t.TITLE);
+    var area = extractStr(t.COLLECT_AREA);
+    var prefMatch = subCat1.includes(prefName)
+                 || titleStr.includes(prefName)
+                 || area.includes(prefName)
+                 || titleNo === String(parseInt(prefCode, 10));
+    if (!prefMatch) continue;
+    var tableName = extractStr(titleSpec.TABLE_NAME) || '';
+    var full = titleStr + ' ' + tableName;
     if (type === 'pop') {
-      // 「人口及び世帯」を含み、「建て方」を含まないテーブル
-      if ((full.includes('人口') && full.includes('世帯')) && !full.includes('建て方')) {
-        return t['@id'];
-      }
+      if ((full.includes('人口') || full.includes('世帯')) && !full.includes('建て方')) return t['@id'];
     } else if (type === 'house') {
-      // 「建て方」を含むテーブル
-      if (full.includes('建て方')) {
-        return t['@id'];
-      }
+      if (full.includes('建て方')) return t['@id'];
     }
   }
   return null;
@@ -290,8 +293,8 @@ async function processPref(pref, statsTables) {
   }
 
   // ---- 3. statsDataId を特定 ----
-  var popId   = findStatsId(statsTables, pref.name, 'pop');
-  var houseId = findStatsId(statsTables, pref.name, 'house');
+  var popId   = findStatsId(statsTables, pref.code, pref.name, 'pop');
+  var houseId = findStatsId(statsTables, pref.code, pref.name, 'house');
   console.log('  popId=' + (popId || '未取得') + '  houseId=' + (houseId || '未取得'));
 
   // ---- 4. e-Stat: 人口・世帯数 ----
