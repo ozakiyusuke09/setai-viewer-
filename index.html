@@ -296,10 +296,13 @@
       font-weight: 600;
       flex-shrink: 0;
     }
-    .pct-green  { color: var(--green); }
-    .pct-orange { color: var(--orange); }
-    .pct-red    { color: var(--red); }
-    .pct-none   { color: var(--text3); }
+    .pct-green        { color: var(--green); }
+    .pct-yellow-green { color: #84cc16; }
+    .pct-orange       { color: #f59e0b; }
+    .pct-red          { color: var(--red); }
+    .pct-none         { color: var(--text2); }
+    .th-sort { cursor: pointer; user-select: none; -webkit-user-select: none; }
+    .th-sort:active { opacity: 0.6; }
 
     @keyframes highlight {
       0%   { background-color: rgba(59, 130, 246, 0.35); }
@@ -381,10 +384,14 @@
 var prefList      = [];   // [{code, name, areas}, ...]  ← index.json
 var areasByPref   = {};   // {prefCode: [{c,ct,w,m,s,k,ky,la,lo}, ...]}
 var loadedPrefs   = {};   // {prefCode: true}
-var navStack      = [];   // [{view, params}, ...]
-var currentView   = null;
-var pendingScrollTo = null;  // KEY_CODE (c) of area to scroll to
-var suggestData   = [];   // [{a, prefCode, prefName}, ...]  ← search results
+var navStack        = [];   // [{view, params}, ...]
+var forwardStack    = [];   // [{view, params}, ...]  ← 進む用
+var currentView     = null;
+var pendingScrollTo = null; // KEY_CODE (c) of area to scroll to
+var suggestData     = [];   // [{a, prefCode, prefName}, ...]
+var townSortKey     = 'm';  // 'm'|'s'|'k'|'ky'|'pct'
+var townSortAsc     = true;
+var currentTownParams = null;
 
 // ---- Init ----
 async function init() {
@@ -417,14 +424,24 @@ async function ensurePrefLoaded(prefCode) {
 // ---- Navigation ----
 function navigate(view, params) {
   if (currentView) navStack.push({view: currentView, params: currentView._params});
+  forwardStack = [];
   showView(view, params);
   updateBackBtn();
 }
 
 function goBack() {
   if (navStack.length === 0) return;
+  forwardStack.push({view: currentView, params: currentView._params});
   var prev = navStack.pop();
   showView(prev.view, prev.params);
+  updateBackBtn();
+}
+
+function goForward() {
+  if (forwardStack.length === 0) return;
+  navStack.push({view: currentView, params: currentView._params});
+  var next = forwardStack.pop();
+  showView(next.view, next.params);
   updateBackBtn();
 }
 
@@ -548,18 +565,31 @@ function showWardView(params) {
 
 // 町丁目一覧（1行表示）
 function showTownView(params) {
-  var pref   = findPref(params.prefCode);
-  var title  = params.ward || params.city;
-  var subTitle = params.ward ? params.city : (pref ? pref.name : '');
-  document.getElementById('headerTitle').textContent = title;
-  document.getElementById('headerSub').textContent = subTitle;
+  var pref = findPref(params.prefCode);
+  document.getElementById('headerTitle').textContent = params.ward || params.city;
+  document.getElementById('headerSub').textContent = params.ward ? params.city : (pref ? pref.name : '');
+  townSortKey = 'm';
+  townSortAsc = true;
+  currentTownParams = params;
+  renderTownContent(params);
+}
 
+function sortTown(key) {
+  if (townSortKey === key) {
+    townSortAsc = !townSortAsc;
+  } else {
+    townSortKey = key;
+    townSortAsc = (key === 'm');  // 名前は昇順、数値は降順をデフォルト
+  }
+  renderTownContent(currentTownParams);
+}
+
+function renderTownContent(params) {
+  var pref     = findPref(params.prefCode);
   var prefName = pref ? pref.name : '';
-  var areas = areasByPref[params.prefCode] || [];
-  var towns = areas.filter(function(a) {
+  var areas    = areasByPref[params.prefCode] || [];
+  var towns    = areas.filter(function(a) {
     return a.ct === params.city && (a.w || '') === (params.ward || '');
-  }).sort(function(a, b) {
-    return a.m.localeCompare(b.m, 'ja');
   });
 
   if (towns.length === 0) {
@@ -568,20 +598,42 @@ function showTownView(params) {
     return;
   }
 
+  // ソート
+  towns = towns.slice().sort(function(a, b) {
+    var cmp;
+    if (townSortKey === 'm') {
+      cmp = a.m.localeCompare(b.m, 'ja');
+    } else if (townSortKey === 'pct') {
+      var pa = a.s > 0 ? a.ky / a.s : -1;
+      var pb = b.s > 0 ? b.ky / b.s : -1;
+      cmp = pa - pb;
+    } else {
+      cmp = (a[townSortKey] || 0) - (b[townSortKey] || 0);
+    }
+    return townSortAsc ? cmp : -cmp;
+  });
+
+  // ヘッダー（ソートインジケーター付き）
+  var ind = {m: '', s: '', k: '', ky: '', pct: ''};
+  ind[townSortKey] = townSortAsc ? ' ▲' : ' ▼';
+
   var html = '<div class="town-list-header">'
-    + '<span class="th-name">町丁目</span>'
-    + '<span class="th-stat">総世帯</span>'
-    + '<span class="th-stat">戸建</span>'
-    + '<span class="th-stat">集合</span>'
-    + '<span class="th-pct">集合%</span>'
+    + '<span class="th-name th-sort" onclick="sortTown(\'m\')">町丁目' + ind.m + '</span>'
+    + '<span class="th-stat th-sort" onclick="sortTown(\'s\')">総世帯' + ind.s + '</span>'
+    + '<span class="th-stat th-sort" onclick="sortTown(\'k\')">戸建' + ind.k + '</span>'
+    + '<span class="th-stat th-sort" onclick="sortTown(\'ky\')">集合' + ind.ky + '</span>'
+    + '<span class="th-pct th-sort" onclick="sortTown(\'pct\')">集合%' + ind.pct + '</span>'
     + '</div>';
 
   towns.forEach(function(t) {
-    var pct     = t.s > 0 ? (t.ky / t.s * 100) : -1;
-    var pctStr  = pct < 0 ? '-' : pct.toFixed(0) + '%';
-    // 集合多い＝効率良い＝緑
-    var pctCls  = pct < 0 ? 'pct-none' : (pct >= 80 ? 'pct-green' : (pct >= 50 ? 'pct-orange' : 'pct-red'));
-    var q       = encodeURIComponent(prefName + t.ct + (t.w || '') + t.m);
+    var pct    = t.s > 0 ? (t.ky / t.s * 100) : -1;
+    var pctStr = pct < 0 ? '-' : pct.toFixed(0) + '%';
+    var pctCls = pct < 0    ? 'pct-none'
+               : pct >= 80  ? 'pct-green'
+               : pct >= 60  ? 'pct-yellow-green'
+               : pct >= 40  ? 'pct-orange'
+               : 'pct-red';
+    var q = encodeURIComponent(prefName + t.ct + (t.w || '') + t.m);
     html += '<a class="town-row" data-code="' + t.c + '"'
       + ' href="https://www.google.com/maps/search/' + q + '" target="_blank" rel="noopener noreferrer">'
       + '<div class="town-name">' + esc(t.m) + '</div>'
@@ -594,7 +646,6 @@ function showTownView(params) {
 
   document.getElementById('content').innerHTML = html;
 
-  // pendingScrollTo: 検索から来た場合、該当行へスクロール＋ハイライト
   if (pendingScrollTo !== null) {
     var targetEl = document.querySelector('.town-row[data-code="' + pendingScrollTo + '"]');
     if (targetEl) {
@@ -702,10 +753,9 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchend', function(e) {
   var dx = e.changedTouches[0].clientX - touchStartX;
   var dy = e.changedTouches[0].clientY - touchStartY;
-  // 右スワイプかつ縦移動が少ない場合＝戻る
-  if (dx > 60 && Math.abs(dy) / Math.abs(dx) < 0.6 && navStack.length > 0) {
-    goBack();
-  }
+  if (Math.abs(dx) < 60 || Math.abs(dy) / Math.abs(dx) >= 0.6) return;
+  if (dx > 0 && navStack.length > 0)     goBack();     // 右スワイプ＝戻る
+  if (dx < 0 && forwardStack.length > 0) goForward();  // 左スワイプ＝進む
 }, {passive: true});
 
 // ---- Utilities ----
