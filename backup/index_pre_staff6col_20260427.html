@@ -916,11 +916,9 @@ function showStaffView(rows, prefCodes) {
   if (!rows.length) {
     html += '<div class="empty-state"><div class="empty-icon">📭</div>データがありません</div>';
   } else {
-    html += '<div class="dl-table-header dl-admin-hd"><span class="dl-th-name">町丁目</span><span class="dl-th-sm">配布</span><span class="dl-th-sm">世帯</span><span class="dl-th-sm">戸建</span><span class="dl-th-sm">集合</span><span class="dl-th-sm">集合%</span></div>';
+    html += '<div class="dl-table-header"><span class="dl-th-name">町丁目</span><span class="dl-th-num">配布数</span><span class="dl-th-num">総世帯</span></div>';
     rows.forEach(function(r){
-      var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
-      var pctCls=a.s>0?(a.ky/a.s>=0.8?'pct-green':a.ky/a.s>=0.6?'pct-yellow-green':a.ky/a.s>=0.4?'pct-orange':'pct-red'):'';
-      html += '<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)+'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div><div class="dl-val dl-sm">'+fmtNum(a.s)+'</div><div class="dl-val dl-sm">'+fmtNum(a.k)+'</div><div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div><div class="dl-val dl-sm '+pctCls+'">'+pct+'</div></a>';
+      html += '<a class="dl-row" href="'+dlMapUrl(r.area)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(r.area)+'<div class="dl-val dl-count">'+fmtNum(r.count)+'</div><div class="dl-val">'+fmtNum(r.area.s)+'</div></a>';
     });
   }
   html += '<div class="dl-hint">📍 町丁目タップ → Googleマップで確認</div></div>';
