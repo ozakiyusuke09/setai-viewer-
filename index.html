@@ -937,8 +937,8 @@ function dlSortRows(rows, key, asc) {
 
 function dlTh(label, key, cls, sortKey, sortAsc, sortFn) {
   var active = key === sortKey;
-  var ind = active ? (sortAsc ? ' ▲' : ' ▼') : '';
-  var style = 'cursor:pointer;' + (active ? 'text-decoration:underline dotted;' : '');
+  var ind = active ? (sortAsc ? '▲' : '▼') : '';
+  var style = 'cursor:pointer;white-space:nowrap;overflow:hidden;' + (active ? 'text-decoration:underline dotted;' : '');
   return '<span class="'+(cls||'dl-th-sm')+'" style="'+style+'" onclick="'+sortFn+'(\''+key+'\')">'+label+ind+'</span>';
 }
 
