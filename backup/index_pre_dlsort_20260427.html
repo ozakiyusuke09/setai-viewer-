@@ -835,9 +835,6 @@ function jsStr(s) {
 var STAFF_COLORS = ['#4285F4','#EA4335','#34A853','#FF6D01','#AB47BC','#00ACC1','#FFB300','#8D6E63','#546E7A','#E91E63'];
 var _adminCtx = null;
 var _adminTab = 0;
-var _dlStaffSortKey = 'm', _dlStaffSortAsc = true;
-var _dlAdminSortKey = 'm', _dlAdminSortAsc = true;
-var _staffCtx = null;
 
 async function startDistribMode() {
   var params = new URLSearchParams(location.search);
@@ -910,73 +907,24 @@ function dlNameCell(a) {
   return '<div class="dl-name"><div class="dl-moji">'+esc(a.m)+'</div><div class="dl-city">'+esc(a.ct+(a.w?' '+a.w:''))+'</div></div>';
 }
 
-function dlPctCls(a) {
-  if (!a.s) return 'pct-none';
-  var r = a.ky / a.s;
-  return r >= 0.8 ? 'pct-green' : r >= 0.6 ? 'pct-yellow-green' : r >= 0.4 ? 'pct-orange' : 'pct-red';
-}
-
-function dlSortRows(rows, key, asc) {
-  return rows.slice().sort(function(x, y) {
-    var va, vb;
-    if (key === 'm') { return asc ? x.area.m.localeCompare(y.area.m,'ja') : y.area.m.localeCompare(x.area.m,'ja'); }
-    if      (key === 'cnt') { va = x.count;   vb = y.count; }
-    else if (key === 's')   { va = x.area.s;  vb = y.area.s; }
-    else if (key === 'k')   { va = x.area.k;  vb = y.area.k; }
-    else if (key === 'ky')  { va = x.area.ky; vb = y.area.ky; }
-    else if (key === 'pct') { va = x.area.s ? x.area.ky/x.area.s : -1; vb = y.area.s ? y.area.ky/y.area.s : -1; }
-    else                    { va = 0; vb = 0; }
-    return asc ? va - vb : vb - va;
-  });
-}
-
-function dlTh(label, key, cls, sortKey, sortAsc, sortFn) {
-  var active = key === sortKey;
-  var ind = active ? (sortAsc ? ' ▲' : ' ▼') : '';
-  var style = 'cursor:pointer;' + (active ? 'text-decoration:underline dotted;' : '');
-  return '<span class="'+(cls||'dl-th-sm')+'" style="'+style+'" onclick="'+sortFn+'(\''+key+'\')">'+label+ind+'</span>';
-}
-
 function showStaffView(rows, prefCodes) {
-  _dlStaffSortKey = 'm'; _dlStaffSortAsc = true;
-  _staffCtx = {rows: rows, prefCodes: prefCodes};
   var tc=0, ts=0;
-  rows.forEach(function(r){tc+=r.count; ts+=r.area.s;});
+  rows.forEach(function(r){tc+=r.count;ts+=r.area.s;});
   var prefName = prefCodes.map(getPrefName).join('・');
-  var wrapper = '<div class="dl-wrap"><div class="dl-header"><span class="dl-icon">📋</span><div><div class="dl-title">配布リスト</div><div class="dl-sub">'+esc(prefName)+'</div></div></div>'
-    +'<div class="dl-stats-row">'+dlStatCard(fmtNum(tc),'配布数合計')+dlStatCard(fmtNum(ts),'世帯合計')+dlStatCard(String(rows.length),'エリア数')+'</div>'
-    +(rows.length ? '<div id="dlStaffTable"></div>' : '<div class="empty-state"><div class="empty-icon">📭</div>データがありません</div>')
-    +'<div class="dl-hint">📍 町丁目タップ → Googleマップで確認</div></div>';
-  dlShow(wrapper);
-  if (rows.length) renderStaffTable();
-}
-
-function renderStaffTable() {
-  var sorted = dlSortRows(_staffCtx.rows, _dlStaffSortKey, _dlStaffSortAsc);
-  var html = '<div class="dl-table-header dl-admin-hd">'
-    +dlTh('町丁目','m','dl-th-name',_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
-    +dlTh('配布','cnt',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
-    +dlTh('世帯','s',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
-    +dlTh('戸建','k',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
-    +dlTh('集合','ky',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
-    +dlTh('集合%','pct',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
-    +'</div>';
-  sorted.forEach(function(r){
-    var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
-    html+='<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)
-      +'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div>'
-      +'<div class="dl-val dl-sm">'+fmtNum(a.s)+'</div>'
-      +'<div class="dl-val dl-sm">'+fmtNum(a.k)+'</div>'
-      +'<div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div>'
-      +'<div class="dl-val dl-sm '+dlPctCls(a)+'">'+pct+'</div></a>';
-  });
-  document.getElementById('dlStaffTable').innerHTML = html;
-}
-
-function dlStaffSort(key) {
-  if (_dlStaffSortKey === key) _dlStaffSortAsc = !_dlStaffSortAsc;
-  else { _dlStaffSortKey = key; _dlStaffSortAsc = true; }
-  renderStaffTable();
+  var html = '<div class="dl-wrap"><div class="dl-header"><span class="dl-icon">📋</span><div><div class="dl-title">配布リスト</div><div class="dl-sub">'+esc(prefName)+'</div></div></div>'
+    +'<div class="dl-stats-row">'+dlStatCard(fmtNum(tc),'配布数合計')+dlStatCard(fmtNum(ts),'世帯合計')+dlStatCard(String(rows.length),'エリア数')+'</div>';
+  if (!rows.length) {
+    html += '<div class="empty-state"><div class="empty-icon">📭</div>データがありません</div>';
+  } else {
+    html += '<div class="dl-table-header dl-admin-hd"><span class="dl-th-name">町丁目</span><span class="dl-th-sm">配布</span><span class="dl-th-sm">世帯</span><span class="dl-th-sm">戸建</span><span class="dl-th-sm">集合</span><span class="dl-th-sm">集合%</span></div>';
+    rows.forEach(function(r){
+      var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
+      var pctCls=a.s>0?(a.ky/a.s>=0.8?'pct-green':a.ky/a.s>=0.6?'pct-yellow-green':a.ky/a.s>=0.4?'pct-orange':'pct-red'):'';
+      html += '<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)+'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div><div class="dl-val dl-sm">'+fmtNum(a.s)+'</div><div class="dl-val dl-sm">'+fmtNum(a.k)+'</div><div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div><div class="dl-val dl-sm '+pctCls+'">'+pct+'</div></a>';
+    });
+  }
+  html += '<div class="dl-hint">📍 町丁目タップ → Googleマップで確認</div></div>';
+  dlShow(html);
 }
 
 function showAdminAuth(areas, prefCodes, dParam, pwHash) {
@@ -1037,34 +985,13 @@ function renderAdminView() {
 }
 
 function buildAdminTable(rows) {
-  var sorted = dlSortRows(rows, _dlAdminSortKey, _dlAdminSortAsc);
-  var html = '<div class="dl-table-header dl-admin-hd">'
-    +dlTh('町丁目','m','dl-th-name',_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
-    +dlTh('配布','cnt',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
-    +dlTh('世帯','s',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
-    +dlTh('戸建','k',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
-    +dlTh('集合','ky',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
-    +dlTh('集合%','pct',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
-    +'</div>';
-  if (!sorted.length) return html+'<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">なし</div>';
-  sorted.forEach(function(r){
+  var html='<div class="dl-table-header dl-admin-hd"><span class="dl-th-name">町丁目</span><span class="dl-th-sm">配布</span><span class="dl-th-sm">世帯</span><span class="dl-th-sm">戸建</span><span class="dl-th-sm">集合</span><span class="dl-th-sm">集合%</span></div>';
+  if (!rows.length) return html+'<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">なし</div>';
+  rows.forEach(function(r){
     var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
-    html+='<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)
-      +'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div>'
-      +'<div class="dl-val dl-sm">'+fmtNum(a.s)+'</div>'
-      +'<div class="dl-val dl-sm">'+fmtNum(a.k)+'</div>'
-      +'<div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div>'
-      +'<div class="dl-val dl-sm '+dlPctCls(a)+'">'+pct+'</div></a>';
+    html+='<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)+'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div><div class="dl-val dl-sm">'+fmtNum(a.s)+'</div><div class="dl-val dl-sm">'+fmtNum(a.k)+'</div><div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div><div class="dl-val dl-sm">'+pct+'</div></a>';
   });
   return html;
-}
-
-function dlAdminSort(key) {
-  if (_dlAdminSortKey === key) _dlAdminSortAsc = !_dlAdminSortAsc;
-  else { _dlAdminSortKey = key; _dlAdminSortAsc = true; }
-  renderAdminView();
-  var el = document.getElementById('dlContainer');
-  if (el) el.scrollTop = 0;
 }
 
 function switchTab(n) {
