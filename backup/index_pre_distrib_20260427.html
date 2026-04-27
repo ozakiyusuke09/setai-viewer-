@@ -242,10 +242,10 @@
     .town-list-header {
       display: flex;
       align-items: center;
-      padding: 5px 16px;
+      padding: 6px 16px;
       background: var(--surface);
       border-bottom: 1px solid var(--surface2);
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text3);
       font-weight: 600;
       letter-spacing: 0.3px;
@@ -253,16 +253,16 @@
       top: 0;
       z-index: 10;
     }
-    .th-name { flex: 1.3; min-width: 0; }
-    .th-stat { width: 68px; text-align: right; flex-shrink: 0; font-size: 11px; }
-    .th-pct  { width: 52px; text-align: right; flex-shrink: 0; font-size: 11px; }
+    .th-name { flex: 1; min-width: 0; }
+    .th-stat { width: 52px; text-align: right; flex-shrink: 0; }
+    .th-pct  { width: 46px; text-align: right; flex-shrink: 0; }
 
     .town-row {
       display: flex;
       align-items: center;
-      min-height: 36px;
-      padding: 6px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      height: 44px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
       cursor: pointer;
       transition: background 0.1s;
       gap: 4px;
@@ -273,7 +273,7 @@
     }
     .town-row:active { background: var(--surface); }
     .town-name {
-      flex: 1.3;
+      flex: 1;
       min-width: 0;
       font-size: 13px;
       font-weight: 500;
@@ -282,7 +282,7 @@
       text-overflow: ellipsis;
     }
     .town-val {
-      width: 68px;
+      width: 52px;
       text-align: right;
       font-size: 12px;
       color: var(--text2);
@@ -290,7 +290,7 @@
       flex-shrink: 0;
     }
     .town-pct {
-      width: 52px;
+      width: 46px;
       text-align: right;
       font-size: 12px;
       font-weight: 600;
@@ -301,16 +301,8 @@
     .pct-orange       { color: #f59e0b; }
     .pct-red          { color: var(--red); }
     .pct-none         { color: var(--text2); }
-    .th-sort {
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      text-decoration-color: var(--surface2);
-      transition: color 0.1s;
-    }
-    .th-sort:active { color: var(--accent); text-decoration-color: var(--accent); }
+    .th-sort { cursor: pointer; user-select: none; -webkit-user-select: none; }
+    .th-sort:active { opacity: 0.6; }
 
     @keyframes highlight {
       0%   { background-color: rgba(59, 130, 246, 0.35); }
@@ -359,45 +351,6 @@
       cursor: pointer;
       margin-top: 8px;
     }
-  /* ===== 配布リストモード ===== */
-  #dlContainer { position:fixed; top:0;left:0;right:0;bottom:0; overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--bg); z-index:9999; padding-top:var(--safe-top); padding-bottom:var(--safe-bottom); }
-  .dl-header { display:flex; align-items:center; gap:12px; padding:16px; background:var(--surface); border-bottom:1px solid var(--surface2); }
-  .dl-icon { font-size:28px; }
-  .dl-title { font-size:17px; font-weight:700; }
-  .dl-sub { font-size:12px; color:var(--text3); margin-top:2px; }
-  .dl-stats-row { display:flex; gap:8px; padding:12px 16px; }
-  .dl-stat-card { flex:1; background:var(--surface); border-radius:10px; padding:10px 8px; text-align:center; }
-  .dl-stat-num { font-size:18px; font-weight:700; color:var(--accent2); }
-  .dl-stat-label { font-size:10px; color:var(--text3); margin-top:2px; }
-  .dl-table-header { display:flex; align-items:center; padding:6px 16px; background:var(--surface); border-bottom:1px solid var(--surface2); font-size:11px; color:var(--text3); font-weight:600; position:sticky; top:0; z-index:10; }
-  .dl-th-name { flex:1; min-width:0; }
-  .dl-th-num { width:62px; text-align:right; flex-shrink:0; }
-  .dl-th-sm  { width:42px; text-align:right; flex-shrink:0; }
-  .dl-admin-hd { position:static; }
-  .dl-row { display:flex; align-items:center; min-height:48px; padding:8px 16px; border-bottom:1px solid rgba(255,255,255,0.05); text-decoration:none; color:inherit; gap:4px; cursor:pointer; transition:background 0.1s; }
-  .dl-row:active { background:var(--surface); }
-  .dl-name { flex:1; min-width:0; }
-  .dl-moji { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .dl-city { font-size:11px; color:var(--text3); margin-top:1px; }
-  .dl-val { width:62px; text-align:right; font-size:13px; color:var(--text2); font-variant-numeric:tabular-nums; flex-shrink:0; }
-  .dl-sm  { width:42px; font-size:12px; }
-  .dl-count { color:var(--accent2); font-weight:700; }
-  .dl-hint { text-align:center; font-size:12px; color:var(--text3); padding:20px 16px; }
-  .dl-tab-bar { display:flex; overflow-x:auto; background:var(--surface); border-bottom:2px solid var(--surface2); position:sticky; top:0; z-index:20; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-  .dl-tab-bar::-webkit-scrollbar { display:none; }
-  .dl-tab { flex-shrink:0; padding:10px 14px; font-size:13px; font-weight:500; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; display:flex; align-items:center; gap:5px; white-space:nowrap; transition:color 0.15s; }
-  .dl-tab.active { color:var(--text); border-bottom-color:var(--accent); }
-  .dl-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block; }
-  .dl-section { margin-bottom:4px; }
-  .dl-section-hd { display:flex; align-items:center; gap:8px; padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--surface2); font-size:13px; }
-  .dl-section-meta { margin-left:auto; font-size:12px; color:var(--text3); }
-  .dl-auth { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100dvh; padding:40px 32px; gap:16px; text-align:center; }
-  .dl-auth-icon { font-size:48px; }
-  .dl-auth-title { font-size:20px; font-weight:700; }
-  .dl-auth-sub { font-size:14px; color:var(--text3); }
-  .dl-pw-input { background:var(--surface); border:2px solid var(--surface2); border-radius:var(--radius); color:var(--text); font-size:28px; letter-spacing:10px; text-align:center; padding:14px 20px; width:180px; outline:none; font-family:inherit; }
-  .dl-pw-input:focus { border-color:var(--accent); }
-  .dl-pw-error { font-size:13px; color:var(--red); min-height:20px; }
   </style>
 </head>
 <body>
@@ -829,178 +782,8 @@ function jsStr(s) {
   return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-// ============================================================
-//  配布リストモード
-// ============================================================
-var STAFF_COLORS = ['#4285F4','#EA4335','#34A853','#FF6D01','#AB47BC','#00ACC1','#FFB300','#8D6E63','#546E7A','#E91E63'];
-var _adminCtx = null;
-var _adminTab = 0;
-
-async function startDistribMode() {
-  var params = new URLSearchParams(location.search);
-  var mode = params.get('mode');
-  if (!mode) { init(); return; }
-  try { var r = await fetch('data/index.json'); prefList = (await r.json()).prefectures || []; } catch(e) {}
-  var prefCodes = (params.get('pref') || '').split(',').map(function(s){return s.trim().padStart(2,'0');}).filter(Boolean);
-  var dParam = params.get('d') || '';
-  var areas = [];
-  for (var i = 0; i < prefCodes.length; i++) {
-    try { var res = await fetch('data/' + prefCodes[i] + '.json'); areas = areas.concat(await res.json()); } catch(e) {}
-  }
-  document.querySelector('.app').style.display = 'none';
-  if (mode === 'staff') { showStaffView(parseDRows(dParam, prefCodes, areas), prefCodes); }
-  else if (mode === 'admin') { showAdminAuth(areas, prefCodes, dParam, params.get('pw') || ''); }
-}
-
-function parseDRows(dParam, prefCodes, areas) {
-  var rows = [];
-  if (!dParam) return rows;
-  dParam.split(',').forEach(function(item) {
-    var parts = item.trim().split(':');
-    if (parts.length !== 2) return;
-    var key = parts[0].trim(), count = parseInt(parts[1], 10);
-    if (isNaN(count)) return;
-    for (var pi = 0; pi < prefCodes.length; pi++) {
-      var area = findAreaByCode(areas, prefCodes[pi] + key);
-      if (area) { rows.push({area:area, count:count}); return; }
-    }
-  });
-  return rows;
-}
-
-function parseAdminD(dParam, prefCodes, areas) {
-  var map = new Map();
-  if (!dParam) return map;
-  dParam.split(';').forEach(function(sec) {
-    sec = sec.trim();
-    var ci = sec.indexOf(':');
-    if (ci < 0) return;
-    var num = parseInt(sec.substring(0, ci), 10);
-    if (isNaN(num)) return;
-    map.set(num, parseDRows(sec.substring(ci + 1), prefCodes, areas));
-  });
-  return map;
-}
-
-function findAreaByCode(areas, code) {
-  for (var i = 0; i < areas.length; i++) { if (areas[i].c === code) return areas[i]; }
-  return null;
-}
-
-function getPrefName(prefCode) { var p = findPref(prefCode); return p ? p.name : ''; }
-
-function dlMapUrl(a) {
-  return 'https://www.google.com/maps/search/' + encodeURIComponent(getPrefName(a.c.substring(0,2)) + a.ct + (a.w||'') + a.m);
-}
-
-function dlShow(html) {
-  var el = document.getElementById('dlContainer');
-  if (!el) { el = document.createElement('div'); el.id = 'dlContainer'; document.body.appendChild(el); }
-  el.innerHTML = html;
-}
-
-function dlStatCard(num, label) {
-  return '<div class="dl-stat-card"><div class="dl-stat-num">'+num+'</div><div class="dl-stat-label">'+label+'</div></div>';
-}
-
-function dlNameCell(a) {
-  return '<div class="dl-name"><div class="dl-moji">'+esc(a.m)+'</div><div class="dl-city">'+esc(a.ct+(a.w?' '+a.w:''))+'</div></div>';
-}
-
-function showStaffView(rows, prefCodes) {
-  var tc=0, ts=0;
-  rows.forEach(function(r){tc+=r.count;ts+=r.area.s;});
-  var prefName = prefCodes.map(getPrefName).join('・');
-  var html = '<div class="dl-wrap"><div class="dl-header"><span class="dl-icon">📋</span><div><div class="dl-title">配布リスト</div><div class="dl-sub">'+esc(prefName)+'</div></div></div>'
-    +'<div class="dl-stats-row">'+dlStatCard(fmtNum(tc),'配布数合計')+dlStatCard(fmtNum(ts),'世帯合計')+dlStatCard(String(rows.length),'エリア数')+'</div>';
-  if (!rows.length) {
-    html += '<div class="empty-state"><div class="empty-icon">📭</div>データがありません</div>';
-  } else {
-    html += '<div class="dl-table-header"><span class="dl-th-name">町丁目</span><span class="dl-th-num">配布数</span><span class="dl-th-num">総世帯</span></div>';
-    rows.forEach(function(r){
-      html += '<a class="dl-row" href="'+dlMapUrl(r.area)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(r.area)+'<div class="dl-val dl-count">'+fmtNum(r.count)+'</div><div class="dl-val">'+fmtNum(r.area.s)+'</div></a>';
-    });
-  }
-  html += '<div class="dl-hint">📍 町丁目タップ → Googleマップで確認</div></div>';
-  dlShow(html);
-}
-
-function showAdminAuth(areas, prefCodes, dParam, pwHash) {
-  window._dlAuth = {areas:areas, prefCodes:prefCodes, dParam:dParam, pwHash:pwHash};
-  dlShow('<div class="dl-wrap dl-auth"><div class="dl-auth-icon">🔒</div><div class="dl-auth-title">管理者認証</div><div class="dl-auth-sub">パスワードを入力してください</div><input type="password" id="pwInput" class="dl-pw-input" maxlength="4" placeholder="••••" inputmode="numeric"><div id="pwError" class="dl-pw-error"></div><button class="retry-btn" onclick="checkAdminPw()">確認</button></div>');
-  var inp = document.getElementById('pwInput');
-  inp.addEventListener('keydown', function(e){if(e.key==='Enter')checkAdminPw();});
-  inp.focus();
-}
-
-async function checkAdminPw() {
-  var inp = document.getElementById('pwInput');
-  var err = document.getElementById('pwError');
-  err.textContent = '';
-  try {
-    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inp.value));
-    var hex = Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-    if (hex === window._dlAuth.pwHash) {
-      var ctx = window._dlAuth;
-      dlShow('');
-      showAdminView(ctx.areas, ctx.prefCodes, ctx.dParam);
-    } else {
-      err.textContent = 'パスワードが違います';
-      inp.value = ''; inp.focus();
-    }
-  } catch(e) { err.textContent = 'エラーが発生しました'; }
-}
-
-function showAdminView(areas, prefCodes, dParam) {
-  var staffMap = parseAdminD(dParam, prefCodes, areas);
-  var nums = Array.from(staffMap.keys()).sort(function(a,b){return a-b;});
-  var tc=0, ta=0;
-  nums.forEach(function(n){staffMap.get(n).forEach(function(r){tc+=r.count;ta++;});});
-  _adminCtx = {prefName:prefCodes.map(getPrefName).join('・'), staffMap:staffMap, nums:nums, totalCount:tc, totalAreas:ta};
-  _adminTab = 0;
-  renderAdminView();
-}
-
-function renderAdminView() {
-  var ctx = _adminCtx;
-  var tabs = '<div class="dl-tab-bar"><div class="dl-tab'+((_adminTab===0)?' active':'')+'" onclick="switchTab(0)">全員</div>';
-  ctx.nums.forEach(function(n){
-    var col=STAFF_COLORS[(n-1)%STAFF_COLORS.length], act=_adminTab===n;
-    tabs+='<div class="dl-tab'+(act?' active':'')+'" style="'+(act?'color:'+col+';border-bottom-color:'+col:'')+'" onclick="switchTab('+n+')"><span class="dl-dot" style="background:'+col+'"></span>担当'+n+'</div>';
-  });
-  tabs += '</div>';
-  var body = '';
-  var show = _adminTab===0 ? ctx.nums : [_adminTab];
-  show.forEach(function(n){
-    var col=STAFF_COLORS[(n-1)%STAFF_COLORS.length], rows=ctx.staffMap.get(n)||[];
-    var cnt=rows.reduce(function(s,r){return s+r.count;},0);
-    body+='<div class="dl-section"><div class="dl-section-hd" style="border-left:3px solid '+col+'"><span class="dl-dot" style="background:'+col+'"></span><strong>担当'+n+'</strong><span class="dl-section-meta">'+rows.length+'エリア・'+fmtNum(cnt)+'部</span></div>'+buildAdminTable(rows)+'</div>';
-  });
-  var html='<div class="dl-wrap"><div class="dl-header"><span class="dl-icon">📋</span><div><div class="dl-title">管理者ビュー</div><div class="dl-sub">'+esc(ctx.prefName)+'</div></div></div>'
-    +tabs+'<div class="dl-stats-row">'+dlStatCard(fmtNum(ctx.totalCount),'総配布数')+dlStatCard(String(ctx.totalAreas),'エリア計')+dlStatCard(String(ctx.nums.length),'担当者数')+'</div>'
-    +'<div id="dlContent">'+body+'</div></div>';
-  dlShow(html);
-}
-
-function buildAdminTable(rows) {
-  var html='<div class="dl-table-header dl-admin-hd"><span class="dl-th-name">町丁目</span><span class="dl-th-sm">配布</span><span class="dl-th-sm">世帯</span><span class="dl-th-sm">戸建</span><span class="dl-th-sm">集合</span><span class="dl-th-sm">集合%</span></div>';
-  if (!rows.length) return html+'<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">なし</div>';
-  rows.forEach(function(r){
-    var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
-    html+='<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)+'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div><div class="dl-val dl-sm">'+fmtNum(a.s)+'</div><div class="dl-val dl-sm">'+fmtNum(a.k)+'</div><div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div><div class="dl-val dl-sm">'+pct+'</div></a>';
-  });
-  return html;
-}
-
-function switchTab(n) {
-  _adminTab = n;
-  renderAdminView();
-  var el = document.getElementById('dlContainer');
-  if (el) el.scrollTop = 0;
-}
-
 // ---- Start ----
-startDistribMode();
+init();
 if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
 </script>
 </body>
