@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(node -e ' *)",
-      "Bash(node.exe -e ' *)"
+      "Bash(node.exe -e ' *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
