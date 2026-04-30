@@ -1,4 +1,4 @@
-var CACHE_NAME = 'setai-viewer-v3';
+var CACHE_NAME = 'setai-viewer-v4';
 
 var PRECACHE = [
   './index.html',
