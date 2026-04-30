@@ -1,7 +1,6 @@
-var CACHE_NAME = 'setai-viewer-v4';
+var CACHE_NAME = 'setai-viewer-v5';
 
 var PRECACHE = [
-  './index.html',
   './manifest.json',
   './data/index.json'
 ];
@@ -33,6 +32,22 @@ self.addEventListener('activate', function(e) {
 // ---- Fetch ----
 self.addEventListener('fetch', function(e) {
   var url = e.request.url;
+
+  // index.html: ネットワーク優先（オフライン時のみキャッシュ）
+  if (url.indexOf('index.html') !== -1 || url.endsWith('/') || url.endsWith('/setai-viewer-/')) {
+    e.respondWith(
+      fetch(e.request).then(function(res) {
+        var clone = res.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(e.request, clone);
+        });
+        return res;
+      }).catch(function() {
+        return caches.match(e.request);
+      })
+    );
+    return;
+  }
 
   // data/XX.json: キャッシュ優先（初回はネットワーク取得してキャッシュ）
   if (url.indexOf('/data/') !== -1 && url.indexOf('.json') !== -1) {
