@@ -867,10 +867,9 @@ function parseDRows(dParam, prefCodes, areas) {
   if (!dParam) return rows;
   dParam.split(',').forEach(function(item) {
     var parts = item.trim().split(':');
-    var key = parts[0].trim();
-    if (!key) return;
-    var count = parts.length >= 2 ? parseInt(parts[1], 10) : 0;
-    if (isNaN(count)) count = 0;
+    if (parts.length !== 2) return;
+    var key = parts[0].trim(), count = parseInt(parts[1], 10);
+    if (isNaN(count)) return;
     for (var pi = 0; pi < prefCodes.length; pi++) {
       var area = findAreaByCode(areas, prefCodes[pi] + key);
       if (area) { rows.push({area:area, count:count}); return; }
@@ -950,11 +949,11 @@ function dlTh(label, key, cls, sortKey, sortAsc, sortFn) {
 function showStaffView(rows, prefCodes) {
   _dlStaffSortKey = 'm'; _dlStaffSortAsc = true;
   _staffCtx = {rows: rows, prefCodes: prefCodes};
-  var ts=0;
-  rows.forEach(function(r){ts+=r.area.s;});
+  var tc=0, ts=0;
+  rows.forEach(function(r){tc+=r.count; ts+=r.area.s;});
   var prefName = prefCodes.map(getPrefName).join('・');
   var wrapper = '<div class="dl-wrap"><div class="dl-header"><span class="dl-icon">📋</span><div><div class="dl-title">配布リスト</div><div class="dl-sub">'+esc(prefName)+'</div></div></div>'
-    +'<div class="dl-stats-row">'+dlStatCard(fmtNum(ts),'世帯合計')+dlStatCard(String(rows.length),'エリア数')+'</div>'
+    +'<div class="dl-stats-row">'+dlStatCard(fmtNum(tc),'配布数合計')+dlStatCard(fmtNum(ts),'世帯合計')+dlStatCard(String(rows.length),'エリア数')+'</div>'
     +(rows.length ? '<div id="dlStaffTable"></div>' : '<div class="empty-state"><div class="empty-icon">📭</div>データがありません</div>')
     +'<div class="dl-hint">📍 町丁目タップ → Googleマップで確認</div></div>';
   dlShow(wrapper);
@@ -965,6 +964,7 @@ function renderStaffTable() {
   var sorted = dlSortRows(_staffCtx.rows, _dlStaffSortKey, _dlStaffSortAsc);
   var html = '<div class="dl-table-header dl-admin-hd">'
     +dlTh('町丁目','m','dl-th-name',_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
+    +dlTh('配布','cnt',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
     +dlTh('世帯','s',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
     +dlTh('戸建','k',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
     +dlTh('集合','ky',null,_dlStaffSortKey,_dlStaffSortAsc,'dlStaffSort')
@@ -973,6 +973,7 @@ function renderStaffTable() {
   sorted.forEach(function(r){
     var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
     html+='<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)
+      +'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div>'
       +'<div class="dl-val dl-sm">'+fmtNum(a.s)+'</div>'
       +'<div class="dl-val dl-sm">'+fmtNum(a.k)+'</div>'
       +'<div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div>'
@@ -1035,10 +1036,11 @@ function renderAdminView() {
   var show = _adminTab===0 ? ctx.nums : [_adminTab];
   show.forEach(function(n){
     var col=STAFF_COLORS[(n-1)%STAFF_COLORS.length], rows=ctx.staffMap.get(n)||[];
-    body+='<div class="dl-section"><div class="dl-section-hd" style="border-left:3px solid '+col+'"><span class="dl-dot" style="background:'+col+'"></span><strong>担当'+n+'</strong><span class="dl-section-meta">'+rows.length+'エリア</span></div>'+buildAdminTable(rows)+'</div>';
+    var cnt=rows.reduce(function(s,r){return s+r.count;},0);
+    body+='<div class="dl-section"><div class="dl-section-hd" style="border-left:3px solid '+col+'"><span class="dl-dot" style="background:'+col+'"></span><strong>担当'+n+'</strong><span class="dl-section-meta">'+rows.length+'エリア・'+fmtNum(cnt)+'部</span></div>'+buildAdminTable(rows)+'</div>';
   });
   var html='<div class="dl-wrap"><div class="dl-header"><span class="dl-icon">📋</span><div><div class="dl-title">管理者ビュー</div><div class="dl-sub">'+esc(ctx.prefName)+'</div></div></div>'
-    +tabs+'<div class="dl-stats-row">'+dlStatCard(String(ctx.totalAreas),'エリア計')+dlStatCard(String(ctx.nums.length),'担当者数')+'</div>'
+    +tabs+'<div class="dl-stats-row">'+dlStatCard(fmtNum(ctx.totalCount),'総配布数')+dlStatCard(String(ctx.totalAreas),'エリア計')+dlStatCard(String(ctx.nums.length),'担当者数')+'</div>'
     +'<div id="dlContent">'+body+'</div></div>';
   dlShow(html);
 }
@@ -1047,6 +1049,7 @@ function buildAdminTable(rows) {
   var sorted = dlSortRows(rows, _dlAdminSortKey, _dlAdminSortAsc);
   var html = '<div class="dl-table-header dl-admin-hd">'
     +dlTh('町丁目','m','dl-th-name',_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
+    +dlTh('配布','cnt',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
     +dlTh('世帯','s',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
     +dlTh('戸建','k',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
     +dlTh('集合','ky',null,_dlAdminSortKey,_dlAdminSortAsc,'dlAdminSort')
@@ -1056,6 +1059,7 @@ function buildAdminTable(rows) {
   sorted.forEach(function(r){
     var a=r.area, pct=a.s>0?(a.ky/a.s*100).toFixed(0)+'%':'-';
     html+='<a class="dl-row" href="'+dlMapUrl(a)+'" target="_blank" rel="noopener noreferrer">'+dlNameCell(a)
+      +'<div class="dl-val dl-sm dl-count">'+fmtNum(r.count)+'</div>'
       +'<div class="dl-val dl-sm">'+fmtNum(a.s)+'</div>'
       +'<div class="dl-val dl-sm">'+fmtNum(a.k)+'</div>'
       +'<div class="dl-val dl-sm">'+fmtNum(a.ky)+'</div>'
