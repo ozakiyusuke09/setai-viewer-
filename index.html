@@ -23,6 +23,8 @@
       --green:       #22c55e;
       --orange:      #f97316;
       --red:         #ef4444;
+      --cyan:        #22d3ee;
+      --cyan-glow:   rgba(34, 211, 238, 0.15);
       --radius:      14px;
       --glass-bg:    rgba(255, 255, 255, 0.04);
       --glass-border: rgba(255, 255, 255, 0.08);
@@ -62,7 +64,7 @@
     }
     body::after {
       width: 250px; height: 250px;
-      background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
+      background: radial-gradient(circle, #0891b2 0%, transparent 70%);
       bottom: 10%; left: -40px;
       animation-delay: -10s; animation-duration: 25s;
     }
@@ -118,7 +120,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      background: linear-gradient(135deg, #f1f5f9 0%, #93c5fd 100%);
+      background: linear-gradient(135deg, #f1f5f9 0%, #22d3ee 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -233,7 +235,7 @@
     }
     .content::-webkit-scrollbar { width: 3px; }
     .content::-webkit-scrollbar-track { background: transparent; }
-    .content::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.3); border-radius: 2px; }
+    .content::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.3); border-radius: 2px; }
 
     /* ===== Prefecture Grid ===== */
     .pref-grid {
@@ -286,7 +288,7 @@
     }
     .pref-card .pref-areas {
       font-size: 10px;
-      color: var(--accent2);
+      color: var(--cyan);
       margin-top: 4px;
       font-weight: 500;
       opacity: 0.6;
@@ -308,7 +310,7 @@
     .list-item {
       display: flex;
       align-items: center;
-      padding: 14px 16px;
+      padding: 10px 16px;
       border-bottom: 1px solid rgba(255,255,255,0.04);
       cursor: pointer;
       transition: all 0.2s;
@@ -339,9 +341,9 @@
     .li-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
     .li-count {
       font-size: 11px;
-      color: var(--accent2);
-      background: rgba(59,130,246,0.1);
-      border: 1px solid rgba(59,130,246,0.15);
+      color: var(--cyan);
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.15);
       padding: 3px 10px;
       border-radius: 12px;
       flex-shrink: 0;
@@ -378,8 +380,8 @@
     .town-row {
       display: flex;
       align-items: center;
-      min-height: 38px;
-      padding: 7px 16px;
+      min-height: 32px;
+      padding: 4px 16px;
       border-bottom: 1px solid rgba(255,255,255,0.03);
       cursor: pointer;
       transition: all 0.15s;
@@ -491,7 +493,7 @@
     .empty-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.5; }
     .retry-btn {
       margin-top: 16px;
-      background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, #06b6d4 100%);
       color: #fff;
       border: none;
       padding: 10px 28px;
@@ -679,7 +681,7 @@ function showView(view, params) {
 // 都道府県一覧
 function showPrefView() {
   document.getElementById('headerTitle').textContent = '世帯数ビューア';
-  document.getElementById('headerSub').textContent = 'ADMAX';
+  document.getElementById('headerSub').textContent = '';
   navStack = [];
   currentView = showPrefView;
   currentView._params = null;
