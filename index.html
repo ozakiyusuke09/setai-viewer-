@@ -194,7 +194,6 @@
       user-select: none;
     }
     .pref-card:active { transform: scale(0.94); border-color: var(--accent); background: var(--surface2); }
-    .pref-card.loaded { border-color: var(--accent2); }
     .pref-card .pref-name {
       font-size: 11px;
       font-weight: 600;
@@ -470,9 +469,6 @@ async function ensurePrefLoaded(prefCode) {
   if (!res.ok) throw new Error('HTTP ' + res.status);
   areasByPref[prefCode] = await res.json();
   loadedPrefs[prefCode] = true;
-  // 都道府県カードに読み込み済みマーク
-  var card = document.querySelector('.pref-card[data-code="' + prefCode + '"]');
-  if (card) card.classList.add('loaded');
 }
 
 // ---- Navigation ----
@@ -506,6 +502,9 @@ function updateBackBtn() {
 function showView(view, params) {
   currentView = view;
   currentView._params = params;
+  var el = document.getElementById('content');
+  el.scrollTop = 0;
+  el.innerHTML = '';
   view(params);
 }
 
@@ -522,7 +521,7 @@ function showPrefView() {
 
   var html = '<div class="pref-grid">';
   prefList.forEach(function(p) {
-    var cls = loadedPrefs[p.code] ? ' loaded' : '';
+    var cls = '';
     html += '<div class="pref-card' + cls + '" data-code="' + p.code + '" onclick="tapPref(\'' + p.code + '\')">'
       + '<div class="pref-name">' + esc(p.name) + '</div>'
       + '<div class="pref-areas">' + fmtNum(p.areas) + '</div>'
