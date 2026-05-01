@@ -3,187 +3,187 @@
     {
       "code": "01",
       "name": "北海道",
-      "areas": 22569
+      "areas": 22606
     },
     {
       "code": "02",
       "name": "青森県",
-      "areas": 4390
+      "areas": 4499
     },
     {
       "code": "03",
       "name": "岩手県",
-      "areas": 3803
+      "areas": 3924
     },
     {
       "code": "04",
       "name": "宮城県",
-      "areas": 5091
+      "areas": 5124
     },
     {
       "code": "05",
       "name": "秋田県",
-      "areas": 4319
+      "areas": 4317
     },
     {
       "code": "06",
       "name": "山形県",
-      "areas": 4292
+      "areas": 4306
     },
     {
       "code": "07",
       "name": "福島県",
-      "areas": 6654
+      "areas": 6647
     },
     {
       "code": "08",
       "name": "茨城県",
-      "areas": 4369
+      "areas": 4388
     },
     {
       "code": "09",
       "name": "栃木県",
-      "areas": 2601
+      "areas": 2611
     },
     {
       "code": "10",
       "name": "群馬県",
-      "areas": 2415
+      "areas": 2386
     },
     {
       "code": "11",
       "name": "埼玉県",
-      "areas": 5945
+      "areas": 5978
     },
     {
       "code": "12",
       "name": "千葉県",
-      "areas": 5914
+      "areas": 5959
     },
     {
       "code": "13",
       "name": "東京都",
-      "areas": 5579
+      "areas": 5595
     },
     {
       "code": "14",
       "name": "神奈川県",
-      "areas": 5054
+      "areas": 5094
     },
     {
       "code": "15",
       "name": "新潟県",
-      "areas": 7676
+      "areas": 7702
     },
     {
       "code": "16",
       "name": "富山県",
-      "areas": 3624
+      "areas": 3637
     },
     {
       "code": "17",
       "name": "石川県",
-      "areas": 3379
+      "areas": 3422
     },
     {
       "code": "18",
       "name": "福井県",
-      "areas": 2902
+      "areas": 2887
     },
     {
       "code": "19",
       "name": "山梨県",
-      "areas": 1279
+      "areas": 1310
     },
     {
       "code": "20",
       "name": "長野県",
-      "areas": 3502
+      "areas": 3448
     },
     {
       "code": "21",
       "name": "岐阜県",
-      "areas": 7619
+      "areas": 7627
     },
     {
       "code": "22",
       "name": "静岡県",
-      "areas": 4778
+      "areas": 4802
     },
     {
       "code": "23",
       "name": "愛知県",
-      "areas": 13683
+      "areas": 14118
     },
     {
       "code": "24",
       "name": "三重県",
-      "areas": 3343
+      "areas": 3342
     },
     {
       "code": "25",
       "name": "滋賀県",
-      "areas": 2774
+      "areas": 2768
     },
     {
       "code": "26",
       "name": "京都府",
-      "areas": 9207
+      "areas": 9206
     },
     {
       "code": "27",
       "name": "大阪府",
-      "areas": 8693
+      "areas": 8725
     },
     {
       "code": "28",
       "name": "兵庫県",
-      "areas": 9712
+      "areas": 9725
     },
     {
       "code": "29",
       "name": "奈良県",
-      "areas": 3079
+      "areas": 3077
     },
     {
       "code": "30",
       "name": "和歌山県",
-      "areas": 2379
+      "areas": 2355
     },
     {
       "code": "31",
       "name": "鳥取県",
-      "areas": 2487
+      "areas": 2483
     },
     {
       "code": "32",
       "name": "島根県",
-      "areas": 1355
+      "areas": 1351
     },
     {
       "code": "33",
       "name": "岡山県",
-      "areas": 5264
+      "areas": 5247
     },
     {
       "code": "34",
       "name": "広島県",
-      "areas": 4267
+      "areas": 4256
     },
     {
       "code": "35",
       "name": "山口県",
-      "areas": 3850
+      "areas": 4093
     },
     {
       "code": "36",
       "name": "徳島県",
-      "areas": 1547
+      "areas": 1541
     },
     {
       "code": "37",
       "name": "香川県",
-      "areas": 904
+      "areas": 899
     },
     {
       "code": "38",
@@ -198,43 +198,43 @@
     {
       "code": "40",
       "name": "福岡県",
-      "areas": 7574
+      "areas": 7627
     },
     {
       "code": "41",
       "name": "佐賀県",
-      "areas": 2227
+      "areas": 2234
     },
     {
       "code": "42",
       "name": "長崎県",
-      "areas": 3535
+      "areas": 3536
     },
     {
       "code": "43",
       "name": "熊本県",
-      "areas": 2883
+      "areas": 2885
     },
     {
       "code": "44",
       "name": "大分県",
-      "areas": 2211
+      "areas": 2263
     },
     {
       "code": "45",
       "name": "宮崎県",
-      "areas": 2441
+      "areas": 2444
     },
     {
       "code": "46",
       "name": "鹿児島県",
-      "areas": 1734
+      "areas": 1760
     },
     {
       "code": "47",
       "name": "沖縄県",
-      "areas": 1262
+      "areas": 1266
     }
   ],
-  "generated": "2026-04-20"
+  "generated": "2026-05-01"
 }
