@@ -391,23 +391,21 @@ async function processPref(pref, statsTables) {
     var house9Map = new Map(); // 9桁code => { k, ky }
     houseVals.forEach(function(v) {
       var code = v['@area'];
-      if (!code) return;
+      if (!code || code.length !== 9) return;
+      if (v['@cat02'] === '3') return; // 秘匿除外
       var num = parseInt(v['$'], 10);
       if (isNaN(num) || v['$'] === '-') num = 0;
-      if (code.length === 9) {
-        if (!house9Map.has(code)) house9Map.set(code, { k: 0, ky: 0 });
-        var h9 = house9Map.get(code);
-        if (v['@cat01'] === '0020') h9.k  = Math.max(h9.k,  num);
-        if (v['@cat01'] === '0040') h9.ky = Math.max(h9.ky, num);
-      }
+      if (!house9Map.has(code)) house9Map.set(code, { k: 0, ky: 0 });
+      var h9 = house9Map.get(code);
+      if (v['@cat01'] === '0020') h9.k  = Math.max(h9.k,  num);
+      if (v['@cat01'] === '0040') h9.ky = Math.max(h9.ky, num);
     });
 
     areaMap.forEach(function(a) {
       if (a.k > 0 || a.ky > 0) return;
       if (a.s <= 0) return;
-      if (a.c.length <= 9) return;
-      var key9 = a.c.substring(0, 9);
-      if (!house9Map.has(key9)) return;
+      var key9 = a.c.length >= 9 ? a.c.substring(0, 9) : '';
+      if (!key9 || !house9Map.has(key9)) return;
       var parent = house9Map.get(key9);
       if (parent.k <= 0 && parent.ky <= 0) return;
 
