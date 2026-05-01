@@ -656,7 +656,7 @@ function renderTownContent(params) {
   towns = towns.slice().sort(function(a, b) {
     var cmp;
     if (townSortKey === 'm') {
-      cmp = a.m.localeCompare(b.m, 'ja');
+      cmp = compareTownName(a.m, b.m);
     } else if (townSortKey === 'pct') {
       var pa = a.s > 0 ? a.ky / a.s : -1;
       var pb = b.s > 0 ? b.ky / b.s : -1;
@@ -926,10 +926,37 @@ function dlPctCls(a) {
   return r >= 0.8 ? 'pct-green' : r >= 0.6 ? 'pct-yellow-green' : r >= 0.4 ? 'pct-orange' : 'pct-red';
 }
 
+function kanjiToNum(s) {
+  var map = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  s = s.replace('丁目', '');
+  if (s.length === 1) return map[s] || 0;
+  var n = 0;
+  for (var i = 0; i < s.length; i++) {
+    if (s[i] === '十') {
+      if (n === 0) n = 1;
+      n *= 10;
+    } else {
+      if (i > 0 && s[i-1] === '十') n += map[s[i]] || 0;
+      else n = map[s[i]] || 0;
+    }
+  }
+  return n;
+}
+
+function compareTownName(a, b) {
+  var re = /^(.+?)([一二三四五六七八九十]+丁目)$/;
+  var ma = a.match(re);
+  var mb = b.match(re);
+  if (ma && mb && ma[1] === mb[1]) {
+    return kanjiToNum(ma[2]) - kanjiToNum(mb[2]);
+  }
+  return a.localeCompare(b, 'ja');
+}
+
 function dlSortRows(rows, key, asc) {
   return rows.slice().sort(function(x, y) {
     var va, vb;
-    if (key === 'm') { return asc ? x.area.m.localeCompare(y.area.m,'ja') : y.area.m.localeCompare(x.area.m,'ja'); }
+    if (key === 'm') { var cm = compareTownName(x.area.m, y.area.m); return asc ? cm : -cm; }
     if      (key === 'cnt') { va = x.count;   vb = y.count; }
     else if (key === 's')   { va = x.area.s;  vb = y.area.s; }
     else if (key === 'k')   { va = x.area.k;  vb = y.area.k; }
