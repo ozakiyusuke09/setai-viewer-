@@ -1,4 +1,4 @@
-var CACHE_NAME = 'setai-viewer-v5';
+var CACHE_NAME = 'setai-viewer-v6';
 
 var PRECACHE = [
   './manifest.json',
