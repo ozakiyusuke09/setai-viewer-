@@ -345,6 +345,15 @@ async function processPref(pref, statsTables) {
   var areaMap = buildAreaList(areaClasses);
   console.log('  areaMap: ' + areaMap.size + ' エリア');
 
+  // コードフォールバック（11桁→10桁→9桁）
+  function lookupArea(code) {
+    var a = areaMap.get(code);
+    if (!a && code.length === 11) {
+      a = areaMap.get(code.substring(0, 10)) || areaMap.get(code.substring(0, 9));
+    }
+    return a;
+  }
+
   // 5. 人口・世帯数取得
   console.log('  人口・世帯数 取得中...');
   var popVals = await fetchEstat(popId, '0010,0040', '1');
@@ -352,7 +361,7 @@ async function processPref(pref, statsTables) {
   popVals.forEach(function(v) {
     var code = v['@area'];
     if (!code) return;
-    var a = areaMap.get(code);
+    var a = lookupArea(code);
     if (!a) return;
     var num = parseInt(v['$'], 10);
     if (isNaN(num) || v['$'] === '-') num = 0;
@@ -369,7 +378,7 @@ async function processPref(pref, statsTables) {
     houseVals.forEach(function(v) {
       var code = v['@area'];
       if (!code) return;
-      var a = areaMap.get(code);
+      var a = lookupArea(code);
       if (!a) return;
       var num = parseInt(v['$'], 10);
       if (isNaN(num) || v['$'] === '-') num = 0;
@@ -386,9 +395,24 @@ async function processPref(pref, statsTables) {
     if (a.s === 0 && a.jinko > 0) a.s = Math.round(a.jinko / 2.1);
   });
 
-  // 8. 出力配列生成（jinko・la・lo は除外）
-  var areas = [];
+  // 8. ct+w+m で集約（調査区単位の複数エントリを合算）
+  var aggregated = new Map();
   areaMap.forEach(function(a) {
+    var key = a.ct + '\0' + a.w + '\0' + a.m;
+    var g = aggregated.get(key);
+    if (!g) {
+      aggregated.set(key, { c: a.c, ct: a.ct, w: a.w, m: a.m, s: a.s, k: a.k, ky: a.ky });
+    } else {
+      g.s  += a.s;
+      g.k  += a.k;
+      g.ky += a.ky;
+      if (a.c.length < g.c.length) g.c = a.c;
+    }
+  });
+
+  // 9. 出力配列生成
+  var areas = [];
+  aggregated.forEach(function(a) {
     areas.push({ c: a.c, ct: a.ct, w: a.w, m: a.m, s: a.s, k: a.k, ky: a.ky });
   });
 
