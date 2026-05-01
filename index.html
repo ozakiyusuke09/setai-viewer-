@@ -31,7 +31,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
-      background: var(--bg);
+      background: linear-gradient(180deg, #0f172a 0%, #141c2f 50%, #0f172a 100%);
       color: var(--text);
       overflow: hidden;
       height: 100vh;
@@ -48,12 +48,13 @@
 
     /* ===== Header ===== */
     .header {
-      background: var(--surface);
+      background: linear-gradient(135deg, #1e293b 0%, #162032 100%);
+      border-bottom: none;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.4);
       padding: calc(12px + var(--safe-top)) 16px 12px;
       display: flex;
       align-items: center;
       gap: 10px;
-      border-bottom: 1px solid var(--surface2);
       flex-shrink: 0;
       z-index: 100;
     }
@@ -72,6 +73,7 @@
     .header h1 {
       font-size: 16px;
       font-weight: 700;
+      letter-spacing: 0.5px;
       flex: 1;
       min-width: 0;
       white-space: nowrap;
@@ -79,15 +81,18 @@
       text-overflow: ellipsis;
     }
     .header-sub {
-      font-size: 11px;
-      color: var(--text3);
+      font-size: 9px;
+      color: var(--accent2);
+      opacity: 0.6;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
       white-space: nowrap;
       flex-shrink: 0;
     }
 
     /* ===== Search ===== */
     .search-wrap {
-      padding: 8px 16px;
+      padding: 6px 12px;
       background: var(--bg);
       flex-shrink: 0;
       position: relative;
@@ -96,13 +101,17 @@
     .search-box {
       display: flex;
       align-items: center;
-      background: var(--surface);
-      border: 1px solid var(--surface2);
-      border-radius: var(--radius);
+      background: linear-gradient(145deg, #1e293b 0%, #222f44 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
       padding: 0 12px;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .search-box:focus-within { border-color: var(--accent); }
+    .search-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 2px 12px rgba(0,0,0,0.25);
+    }
     .search-icon { color: var(--text3); font-size: 16px; flex-shrink: 0; }
     .search-input {
       flex: 1;
@@ -170,6 +179,8 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding-bottom: var(--safe-bottom);
+      display: flex;
+      flex-direction: column;
     }
     .content::-webkit-scrollbar { width: 4px; }
     .content::-webkit-scrollbar-track { background: transparent; }
@@ -179,33 +190,50 @@
     .pref-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 6px;
-      padding: 12px;
+      gap: 8px;
+      padding: 8px 10px;
+      flex: 1;
+      align-content: start;
     }
     .pref-card {
-      background: var(--surface);
-      border: 1px solid var(--surface2);
-      border-radius: 8px;
-      padding: 8px 2px;
+      background: linear-gradient(160deg, #1e293b 0%, #253349 100%);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      padding: 12px 2px;
       text-align: center;
       cursor: pointer;
-      transition: transform 0.12s, border-color 0.12s, background 0.12s;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
       -webkit-user-select: none;
       user-select: none;
+      animation: cardIn 0.4s ease-out both;
     }
-    .pref-card:active { transform: scale(0.94); border-color: var(--accent); background: var(--surface2); }
+    .pref-card:active {
+      transform: scale(0.93);
+      border-color: rgba(59,130,246,0.5);
+      box-shadow: 0 0 12px rgba(59,130,246,0.2);
+      background: linear-gradient(160deg, #253349 0%, #2d4060 100%);
+    }
     .pref-card .pref-name {
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
       white-space: nowrap;
       overflow: hidden;
-      letter-spacing: -0.3px;
     }
     .pref-card .pref-areas {
-      font-size: 9px;
-      color: var(--text3);
-      margin-top: 2px;
+      font-size: 10px;
+      color: var(--accent2);
+      margin-top: 3px;
+      font-weight: 500;
+      opacity: 0.7;
     }
+    .pref-card:nth-child(6n+1) { animation-delay: 0s; }
+    .pref-card:nth-child(6n+2) { animation-delay: 0.03s; }
+    .pref-card:nth-child(6n+3) { animation-delay: 0.06s; }
+    .pref-card:nth-child(6n+4) { animation-delay: 0.09s; }
+    .pref-card:nth-child(6n+5) { animation-delay: 0.12s; }
+    .pref-card:nth-child(6n+6) { animation-delay: 0.15s; }
 
     /* ===== List Items ===== */
     .list-item {
@@ -216,6 +244,7 @@
       cursor: pointer;
       transition: background 0.1s;
       gap: 12px;
+      animation: listIn 0.3s ease-out both;
     }
     .list-item:active { background: var(--surface); }
     .li-main { flex: 1; min-width: 0; }
@@ -271,6 +300,8 @@
       user-select: none;
     }
     .town-row:active { background: var(--surface); }
+    .town-row:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .town-row:nth-child(even):active { background: var(--surface); }
     .town-name {
       flex: 2;
       min-width: 0;
@@ -318,6 +349,23 @@
       100% { background-color: transparent; }
     }
     .town-row.highlighted { animation: highlight 1.5s ease-out forwards; }
+
+    @keyframes cardIn {
+      0%   { opacity: 0; transform: translateY(12px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes fadeSlideIn {
+      0%   { opacity: 0; transform: translateX(20px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeSlideBack {
+      0%   { opacity: 0; transform: translateX(-20px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes listIn {
+      0%   { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
 
     /* ===== Loading ===== */
     .loading {
@@ -483,7 +531,15 @@ function goBack() {
   if (navStack.length === 0) return;
   forwardStack.push({view: currentView, params: currentView._params});
   var prev = navStack.pop();
-  showView(prev.view, prev.params);
+  currentView = prev.view;
+  currentView._params = prev.params;
+  var el = document.getElementById('content');
+  el.scrollTop = 0;
+  el.innerHTML = '';
+  el.style.animation = 'none';
+  el.offsetHeight; // reflow
+  el.style.animation = 'fadeSlideBack 0.25s ease-out';
+  prev.view(prev.params);
   updateBackBtn();
 }
 
@@ -505,6 +561,9 @@ function showView(view, params) {
   var el = document.getElementById('content');
   el.scrollTop = 0;
   el.innerHTML = '';
+  el.style.animation = 'none';
+  el.offsetHeight; // reflow
+  el.style.animation = 'fadeSlideIn 0.25s ease-out';
   view(params);
 }
 
@@ -513,7 +572,7 @@ function showView(view, params) {
 // 都道府県一覧
 function showPrefView() {
   document.getElementById('headerTitle').textContent = '世帯数ビューア';
-  document.getElementById('headerSub').textContent = '全国版';
+  document.getElementById('headerSub').textContent = 'ADMAX';
   navStack = [];
   currentView = showPrefView;
   currentView._params = null;
