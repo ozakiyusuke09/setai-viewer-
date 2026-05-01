@@ -386,6 +386,50 @@ async function processPref(pref, statsTables) {
       if (v['@cat01'] === '0040') a.ky = Math.max(a.ky, num);
     });
     console.log('  住宅建て方: ' + houseVals.length + ' 件');
+
+    // ---- 5.5. 建て方フォールバック: 9桁合算値を11桁エリアに按分 ----
+    var house9Map = new Map(); // 9桁code => { k, ky }
+    houseVals.forEach(function(v) {
+      var code = v['@area'];
+      if (!code) return;
+      var num = parseInt(v['$'], 10);
+      if (isNaN(num) || v['$'] === '-') num = 0;
+      if (code.length === 9) {
+        if (!house9Map.has(code)) house9Map.set(code, { k: 0, ky: 0 });
+        var h9 = house9Map.get(code);
+        if (v['@cat01'] === '0020') h9.k  = Math.max(h9.k,  num);
+        if (v['@cat01'] === '0040') h9.ky = Math.max(h9.ky, num);
+      }
+    });
+
+    areaMap.forEach(function(a) {
+      if (a.k > 0 || a.ky > 0) return;
+      if (a.s <= 0) return;
+      if (a.c.length <= 9) return;
+      var key9 = a.c.substring(0, 9);
+      if (!house9Map.has(key9)) return;
+      var parent = house9Map.get(key9);
+      if (parent.k <= 0 && parent.ky <= 0) return;
+
+      var totalSetai = 0;
+      areaMap.forEach(function(b) {
+        if (b.c.length > 9 && b.c.substring(0, 9) === key9 && b.s > 0) {
+          totalSetai += b.s;
+        }
+      });
+      if (totalSetai <= 0) return;
+
+      var ratio = a.s / totalSetai;
+      if (a.k === 0 && parent.k > 0)  a.k  = Math.round(parent.k  * ratio);
+      if (a.ky === 0 && parent.ky > 0) a.ky = Math.round(parent.ky * ratio);
+    });
+
+    var fallbackCount = 0;
+    areaMap.forEach(function(a) {
+      if (a.s > 0 && a.k === 0 && a.ky === 0) fallbackCount++;
+    });
+    console.log('  按分フォールバック後の k=0,ky=0 残: ' + fallbackCount + ' 件');
+
   } else {
     console.warn('  住宅建て方データのstatsDataIdが見つかりませんでした');
   }
