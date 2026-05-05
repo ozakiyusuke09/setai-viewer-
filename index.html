@@ -1016,6 +1016,35 @@ var _staffCtx = null;
 
 async function startDistribMode() {
   var params = new URLSearchParams(location.search);
+
+  // ★ セッションID方式（新方式: ?s=ID）
+  var sessionId = params.get('s');
+  if (sessionId) {
+    try {
+      var res = await fetch('data/sessions/' + sessionId + '.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var session = await res.json();
+      try { var r = await fetch('data/index.json'); prefList = (await r.json()).prefectures || []; } catch(e) {}
+      var prefCodes = (session.pref || '').split(',').map(function(s){return s.trim().padStart(2,'0');}).filter(Boolean);
+      var areas = [];
+      for (var i = 0; i < prefCodes.length; i++) {
+        try { var r2 = await fetch('data/' + prefCodes[i] + '.json'); areas = areas.concat(await r2.json()); } catch(e) {}
+      }
+      document.querySelector('.app').style.display = 'none';
+      if (session.mode === 'admin') {
+        showAdminAuth(areas, prefCodes, session.d || '', session.pw || '');
+      } else {
+        showStaffView(parseDRows(session.d || '', prefCodes, areas), prefCodes);
+      }
+      return;
+    } catch(e) {
+      document.querySelector('.app').style.display = 'none';
+      dlShow('<div class="empty-state"><div class="empty-icon">⚠️</div>セッションデータの読み込みに失敗しました<br><small>' + e.message + '</small><br><br><button class="retry-btn" onclick="location.reload()">再読み込み</button></div>');
+      return;
+    }
+  }
+
+  // ★ 旧方式（?mode=staff&d=... または ?mode=admin&d=...&pw=...）
   var mode = params.get('mode');
   if (!mode) { init(); return; }
   try { var r = await fetch('data/index.json'); prefList = (await r.json()).prefectures || []; } catch(e) {}
